@@ -46,10 +46,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     
 
 
-
-
-
-
 class Place(models.Model):
     place_id = models.IntegerField(primary_key=True)
     empty = models.BooleanField(default=True)

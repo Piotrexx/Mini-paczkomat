@@ -55,3 +55,7 @@ class PackageViewSet(GenericViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response("Pomyślnie dodano paczkę", status=HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], permission_classes=[IfWorker])
+    def all_packages(self, request):
+        return Response(self.serializer_class(data=Package.objects.all()).data, status=HTTP_200_OK)
