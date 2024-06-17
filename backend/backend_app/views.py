@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_200_OK, HTTP_201_CREATED
 from backend_app.serializers import UserSerializer, PackageSerializer, PlaceSerializer
 from django.db.utils import IntegrityError
-
+from uuid import uuid4
 
 
 
@@ -49,13 +49,19 @@ class PackageViewSet(GenericViewSet):
     queryset = Package.objects.all()
     serializer_class = PackageSerializer
 
-    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def create_package(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response("Pomyślnie dodano paczkę", status=HTTP_201_CREATED)
+        serializer.save(package_code=uuid4(), place=Place.objects.filter(empty=True)[:1])
+        return Response("Nadano przesyłkę", status=HTTP_201_CREATED)
+    
 
     @action(detail=False, methods=['get'], permission_classes=[IfWorker])
     def all_packages(self, request):
-        return Response(self.serializer_class(data=Package.objects.all()).data, status=HTTP_200_OK)
+        return Response(self.serializer_class(data=self.queryset).data, status=HTTP_200_OK)
+    
+
+    @action(detail=False, methods=['get'], permission_classes=[IfWorker])
+    def all_inside(self, request):
+        return Response(self.serializer_class(data=Package.objects.filter(picked_up=False), many=True).data)

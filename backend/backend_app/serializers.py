@@ -14,7 +14,9 @@ class PlaceSerializer(ModelSerializer):
         fields = "__all__"
 
 class PackageSerializer(ModelSerializer):
+    receiver = UserSerializer(read_only=True)
     class Meta:
         model = Package
         fields = "__all__"
+        read_only_fields = ("package_code", "place", "date_addressed")
 
