@@ -1,7 +1,12 @@
 import RPi.GPIO as GPIO
 import time
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(4,GPIO.OUT)
-GPIO.output(4,GPIO.HIGH)
-time.sleep(1)
-GPIO.output(4,GPIO.LOW)
+
+diodes = [4,27,22]
+
+for gpio in diodes:
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(gpio,GPIO.OUT)
+    GPIO.output(gpio,GPIO.HIGH)
+    time.sleep(1)
+    GPIO.output(gpio,GPIO.LOW)
+
