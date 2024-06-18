@@ -1,11 +1,10 @@
-from backend_app.models import User, Package, Place, Paczkomat
+from backend_app.models import User, Package, Locker, Paczkomat
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
-from backend_app.permissions import IfWorker
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_200_OK, HTTP_201_CREATED
-from backend_app.serializers import UserSerializer, PackageSerializer, PlaceSerializer, PaczkomatSerializer
+from backend_app.serializers import UserSerializer, PackageSerializer, LockerSerializer, PaczkomatSerializer
 from django.db.utils import IntegrityError
 from uuid import uuid4
 from django.shortcuts import get_object_or_404
@@ -29,20 +28,24 @@ class UserViewSet(GenericViewSet):
             )
         
 
-class PlaceViewSet(GenericViewSet):
-    queryset = Place.objects.all()
-    serializer_class = PlaceSerializer
+class LockerViewSet(GenericViewSet):
+    queryset = Locker.objects.all()
+    serializer_class = LockerSerializer
 
     @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
-    def add_place(self, request):
+    def add_locker(self, request):
+        paczkomat = get_object_or_404(Paczkomat, id=request.data['paczkomat'])
+        if len(Locker.objects.filter(paczkomat=paczkomat.id)) >= 5:
+            return Response("W tym paczkomacie nie można dodawać więcej skrzynek", status=HTTP_403_FORBIDDEN)
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exceptions=True)
         serializer.save()
-        return Response(serializer.data)
+        return Response("Dodano skrzynkę", status=HTTP_201_CREATED)
 
-    @action(detail=False, methods=['get'], permission_classes={IfWorker})
-    def check_empty_places(self, request):
-        queryset = Place.objects.filter(empty=True)
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
+    def check_empty_lockers(self, request):
+        queryset = Locker.objects.filter(empty=True)
         return Response(self.serializer_class(data=queryset, many=True).data, status=HTTP_200_OK)
 
 class PackageViewSet(GenericViewSet):
@@ -51,23 +54,23 @@ class PackageViewSet(GenericViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def create_package(self, request):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class()
         serializer.is_valid(raise_exception=True)
-        serializer.save(package_code=uuid4(), place=Place.objects.filter(empty=True)[:1])
-        return Response("Nadano przesyłkę", status=HTTP_201_CREATED)
+        serializer.save(locker=Locker.objects.filter(empty=True)[:1], receiver=User.objects.get(id=request.data['receiver']))
+        return Response(f"Nadano przesyłkę do skrytki: {serializer.data['locker']}", status=HTTP_201_CREATED)
     
 
-    @action(detail=False, methods=['get'], permission_classes=[IfWorker])
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
     def all_packages(self, request):
         return Response(self.serializer_class(data=self.queryset).data, status=HTTP_200_OK)
     
 
-    @action(detail=False, methods=['get'], permission_classes=[IfWorker])
+    @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
     def all_inside(self, request):
         return Response(self.serializer_class(data=Package.objects.filter(picked_up=False), many=True).data)
     
 
-class CheckIP(GenericViewSet):
+class CheckIPViewSet(GenericViewSet):
 
     @action(detail=False, methods=['PATCH'], permission_classes=[AllowAny])
     def check(self, request):
@@ -79,11 +82,11 @@ class CheckIP(GenericViewSet):
         return Response("Wszystko jest ok", status=HTTP_200_OK)
     
 
-class Paczkomat(GenericViewSet):
+class PaczkomatViewSet(GenericViewSet):
 
     serializer_class = PaczkomatSerializer
 
-    @action(detail=False, methods=['post'], permission_classes=[IfWorker])
+    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
     def add_paczkomat(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)

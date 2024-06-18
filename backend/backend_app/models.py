@@ -47,20 +47,21 @@ class User(AbstractBaseUser, PermissionsMixin):
     
 
 
-class Place(models.Model):
-    place_id = models.IntegerField(primary_key=True)
+class Paczkomat(models.Model):
+    id = models.UUIDField(primary_key=True, editable=False)
+    ip_address = models.GenericIPAddressField(protocol='IPv4')
+
+
+class Locker(models.Model):
+    locker_id = models.IntegerField(primary_key=True)
     empty = models.BooleanField(default=True)
+    paczkomat = models.ForeignKey(Paczkomat, on_delete=models.CASCADE)
+
 
 class Package(models.Model):
     # package_code = models.UUIDField(primary_key=True, editable=False)
     package_name = models.CharField(max_length=100)
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="receiver")
-    place = models.ForeignKey(Place, on_delete=models.CASCADE, related_name="place")
+    locker = models.ForeignKey(Locker, on_delete=models.CASCADE, related_name="locker")
     date_addressed = models.DateTimeField(auto_now_add=True)
     picked_up = models.BooleanField(default=False)
-
-
-class Paczkomat(models.Model):
-    id = models.UUIDField(primary_key=True, editable=False)
-    ip_address = models.GenericIPAddressField(protocol='IPv4')
-

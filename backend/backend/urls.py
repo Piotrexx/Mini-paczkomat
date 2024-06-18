@@ -5,7 +5,10 @@ from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'user', views.UserViewSet, 'user')
-
+router.register(r'locker', views.LockerViewSet, 'locker')
+router.register(r'package', views.PackageViewSet, 'package')
+router.register(r'ip', views.CheckIPViewSet, 'ip')
+router.register(r'paczkomat', views.PaczkomatViewSet, 'paczkomat')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
