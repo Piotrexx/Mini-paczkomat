@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from backend_app.models import User, Package, Place
+from backend_app.models import User, Package, Place, Paczkomat
 
 
 class UserSerializer(ModelSerializer):
@@ -20,3 +20,8 @@ class PackageSerializer(ModelSerializer):
         fields = "__all__"
         read_only_fields = ("package_code", "place", "date_addressed")
 
+
+class PaczkomatSerializer(ModelSerializer):
+    class Meta:
+        model = Paczkomat
+        fields = "__all__"
