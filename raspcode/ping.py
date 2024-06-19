@@ -7,7 +7,12 @@ import socket
 decision = bool(int(input("Create 0. new or 1. check ? 0/1")))
 load_dotenv()
 uuid = os.getenv("uuid") # uuid paczkomatu wygenerowane wcześniej
-ip_address = socket.gethostbyname(socket.gethostname()) # adres IP w sieci lokalnej (może kiedyś przerobię to na sięć publiczą)
+
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+ip_address=s.getsockname()[0]
+s.close() # adres IP w sieci lokalnej (może kiedyś przerobię to na sięć publiczą)
+
 BASE_URL = os.getenv("server_url")
 
 if decision:

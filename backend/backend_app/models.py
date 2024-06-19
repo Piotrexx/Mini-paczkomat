@@ -48,7 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Paczkomat(models.Model):
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = models.UUIDField(primary_key=True)
     ip_address = models.GenericIPAddressField(protocol='IPv4')
 
 

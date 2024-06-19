@@ -86,7 +86,7 @@ class PaczkomatViewSet(GenericViewSet):
 
     serializer_class = PaczkomatSerializer
 
-    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def add_paczkomat(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
