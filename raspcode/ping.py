@@ -4,7 +4,7 @@ import os
 import socket
 
 
-decision = bool(input("Create 0. new or 1. check ? 0/1"))
+decision = bool(int(input("Create 0. new or 1. check ? 0/1")))
 
 if decision:
     url = "/ip/check/"
