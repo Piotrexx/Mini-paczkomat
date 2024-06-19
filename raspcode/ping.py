@@ -14,7 +14,7 @@ else:
 load_dotenv()
 uuid = os.getenv("uuid") # uuid paczkomatu wygenerowane wcześniej
 ip_address = socket.gethostbyname(socket.gethostname()) # adres IP w sieci lokalnej (może kiedyś przerobię to na sięć publiczą)
+BASE_URL = os.getenv("server_url")
 
 
-
-requests.patch(url=f"{os.getenv("server_url")}{url}", data={"id": uuid, "ip_address": ip_address})
+requests.patch(url=f"{BASE_URL}{url}", data={"id": uuid, "ip_address": ip_address})
