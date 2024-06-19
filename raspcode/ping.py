@@ -14,7 +14,7 @@ if decision:
     requests.patch(url=f"{BASE_URL}/ip/check/", data={"id": uuid, "ip_address": ip_address})
 
 else:
-    requests.patch(url=f"{BASE_URL}/paczkomat/add_paczkomat/", data={"id": uuid, "ip_address": ip_address})
+    requests.post(url=f"{BASE_URL}/paczkomat/add_paczkomat/", data={"id": uuid, "ip_address": ip_address})
 
 
 
