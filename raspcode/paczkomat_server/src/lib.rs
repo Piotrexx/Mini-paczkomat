@@ -20,7 +20,8 @@ pub fn ping() {
     data.insert("ip", return_local_ipaddress().unwrap().to_string());
 
     let client = reqwest::Client::new();
-    let _res = client.patch({std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env.")} + "/ip/check/")
+    let res = client.patch({std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env.")} + "/ip/check/")
     .json(&data)
     .send();
+    println!("Response: {:?}", res)
 }
