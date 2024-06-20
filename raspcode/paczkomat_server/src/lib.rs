@@ -26,7 +26,7 @@ pub async fn ping() {
     let ip = return_local_ipaddress().unwrap().to_string();
 
     let data = json!({
-        "uuid": uuid,
+        "id": uuid,
         "ip": ip,
     });
 
