@@ -27,7 +27,7 @@ pub async fn ping() {
 
     let data = json!({
         "id": uuid,
-        "ip": ip,
+        "ip_address": ip,
     });
 
     let response = client
