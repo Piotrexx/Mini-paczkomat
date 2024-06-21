@@ -4,8 +4,8 @@ use dotenv::dotenv;
 use reqwest::{Client, Url};
 use serde_json::json;
 use std::net::TcpListener;
-use rocket::Config;
-
+use std::env;
+use std::str::FromStr;
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
     let paczkomat_ip = local_ip();
@@ -27,12 +27,13 @@ pub async fn ping() {
     let client = Client::new();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     let ip = return_local_ipaddress().unwrap().to_string();
-    let port = Config::release_default().port;
+    let port_string = env::var("PORT").unwrap();
+    let port_num = u32::from_str(&port_string).unwrap();
 
     let data = json!({
         "id": uuid,
         "ip_address": ip,
-        "port": port
+        "port": port_num
     });
 
     let response = client
@@ -57,7 +58,10 @@ pub fn get_avaible_port() -> Option<u16> {
 fn port_is_available(port: u16) -> bool{
     let ip_address = return_local_ipaddress().unwrap();
     match TcpListener::bind((ip_address, port)){
-        Ok(_) => true,
+        Ok(_) => {
+            env::set_var("PORT", port.to_string());
+            true
+        },
         Err(_) => false
     }
 }
