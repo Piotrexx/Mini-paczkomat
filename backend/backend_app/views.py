@@ -32,9 +32,9 @@ class LockerViewSet(GenericViewSet):
     queryset = Locker.objects.all()
     serializer_class = LockerSerializer
 
-    @action(detail=False, methods=['post'], permission_classes=[IsAdminUser])
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def add_locker(self, request):
-        paczkomat = get_object_or_404(Paczkomat, id=request.data['paczkomat'])
+        paczkomat = get_object_or_404(Paczkomat, id=request.data['id'])
         if len(Locker.objects.filter(paczkomat=paczkomat.id)) >= 5:
             return Response("W tym paczkomacie nie można dodawać więcej skrzynek", status=HTTP_403_FORBIDDEN)
 
@@ -86,6 +86,7 @@ class CheckIPViewSet(GenericViewSet):
     @action(detail=False, methods=['PATCH'], permission_classes=[AllowAny])
     def check(self, request):
         paczkomat = get_object_or_404(Paczkomat, id=request.data['id'])
+        paczkomat.port = request.data['port']
         if paczkomat.ip_address != request.data['ip_address']:
             paczkomat.ip_address = request.data['ip_address']
             paczkomat.save()

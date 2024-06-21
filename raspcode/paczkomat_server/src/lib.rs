@@ -29,6 +29,7 @@ pub async fn ping() {
     let data = json!({
         "id": uuid,
         "ip_address": ip,
+        "port": get_avaible_port()
     });
 
     let response = client
