@@ -86,9 +86,9 @@ class CheckIPViewSet(GenericViewSet):
     @action(detail=False, methods=['PATCH'], permission_classes=[AllowAny])
     def check(self, request):
         paczkomat = get_object_or_404(Paczkomat, id=request.data['id'])
-        paczkomat.port = request.data['port']
-        if paczkomat.ip_address != request.data['ip_address']:
+        if paczkomat.ip_address != request.data['ip_address'] or paczkomat.port != request.data["port"]:
             paczkomat.ip_address = request.data['ip_address']
+            paczkomat.port = request.data['port']
             paczkomat.save()
             return Response("Zmieniona adres IP", status=HTTP_200_OK)
         return Response("Wszystko jest ok", status=HTTP_200_OK)
