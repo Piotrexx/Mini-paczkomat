@@ -1,5 +1,5 @@
 // rust_gpiozero = "0.2.0" tylko na raspberry pi
-use lib::{ping, return_local_ipaddress};
+use lib::{get_avaible_port, ping, return_local_ipaddress};
 mod lib;
 #[macro_use] extern crate rocket;
 
@@ -18,7 +18,9 @@ async fn check() -> String {
 #[launch]
 fn rocket() -> _ {
     rocket::build()
-    .configure(rocket::Config::figment().merge(("address", return_local_ipaddress().unwrap())))
+    .configure(rocket::Config::figment()
+    .merge(("address", return_local_ipaddress().unwrap()))
+    .merge(("port", get_avaible_port())))
     .mount("/", routes![hello, check])
 }
 

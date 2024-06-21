@@ -3,6 +3,7 @@ use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
 use serde_json::json;
+use std::net::TcpListener;
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
     let paczkomat_ip = local_ip();
@@ -44,3 +45,16 @@ pub async fn ping() {
     }
     
 }
+
+pub fn get_avaible_port() -> Option<u16> {
+    (8001..9000).find(|port| port_is_available(*port))
+}
+
+fn port_is_available(port: u16) -> bool{
+    let ip_address = return_local_ipaddress().unwrap();
+    match TcpListener::bind((ip_address, port)){
+        Ok(_) => true,
+        Err(_) => false
+    }
+}
+

@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class CustomUserManager(BaseUserManager):
     def create(self, **kwargs):
@@ -45,12 +46,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
     
-
+    # def has__package(self):
+    #     return Package.objects.get()
 
 class Paczkomat(models.Model):
     id = models.UUIDField(primary_key=True)
     ip_address = models.GenericIPAddressField(protocol='IPv4')
-
+    port = models.IntegerField(validators=[MinValueValidator(8001), MaxValueValidator(9000)], default=None, null=True)
 
 class Locker(models.Model):
     locker_id = models.IntegerField(primary_key=True)
