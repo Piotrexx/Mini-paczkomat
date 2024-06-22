@@ -1,8 +1,8 @@
 // rust_gpiozero = "0.2.0" tylko na raspberry pi
-use dotenv::dotenv;
 use reqwest::{Client, Url};
 use serde_json::json;
 use lib::{get_avaible_port, ping, return_local_ipaddress};
+use dotenv::dotenv;
 mod lib;
 #[macro_use] extern crate rocket;
 
@@ -20,6 +20,7 @@ async fn check() -> String {
 
 #[post("/add_locker/<gpio>")]
 async fn add_locker(gpio: u16) -> () {
+    dotenv().ok();
     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
@@ -28,7 +29,7 @@ async fn add_locker(gpio: u16) -> () {
         "locker_id": gpio,
     });
     let response = client
-        .patch(Url::parse(&url).unwrap())
+        .post(Url::parse(&url).unwrap())
         .json(&data)
         .send()
         .await
