@@ -20,7 +20,7 @@ async fn check() -> String {
 
 #[post("/add_locker/<gpio>")]
 async fn add_locker(gpio: u16) -> () {
-    let url = format!("{}/ip/check/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
+    let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     let data = json!({
