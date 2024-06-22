@@ -38,9 +38,9 @@ class LockerViewSet(GenericViewSet):
         if len(Locker.objects.filter(paczkomat=paczkomat.id)) >= 5:
             return Response("W tym paczkomacie nie można dodawać więcej skrzynek", status=HTTP_403_FORBIDDEN)
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exceptions=True)
-        serializer.save()
+        serializer.save(locker_id=request.data['locker_id'], paczkomat=paczkomat)
         return Response("Dodano skrzynkę", status=HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
