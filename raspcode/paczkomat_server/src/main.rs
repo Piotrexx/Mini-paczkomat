@@ -1,7 +1,7 @@
 // rust_gpiozero = "0.2.0" tylko na raspberry pi
 use reqwest::{Client, Url};
 use serde_json::json;
-use lib::{get_avaible_port, ping, return_local_ipaddress};
+use lib::{get_avaible_port, ping_or_create, return_local_ipaddress};
 use dotenv::dotenv;
 mod lib;
 #[macro_use] extern crate rocket;
@@ -13,9 +13,8 @@ fn hello(name: &str, age: u8) -> String {
 }
 
 #[get("/check")]
-async fn check() -> String {
-    ping().await;
-    format!("Wysłano requesta do sprawdzenia IP")
+async fn check() -> () {
+    ping_or_create().await;
 }
 
 #[post("/add_locker/<gpio>")]
@@ -34,10 +33,10 @@ async fn add_locker(gpio: u16) -> () {
         .send()
         .await
         .unwrap();
-
     format!("Wystąpił błąd: {}", response.status());
-
 }
+
+
 
 
 #[launch]

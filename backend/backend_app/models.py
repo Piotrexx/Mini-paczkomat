@@ -55,7 +55,8 @@ class Paczkomat(models.Model):
     port = models.IntegerField(validators=[MinValueValidator(8001), MaxValueValidator(9000)], default=None, null=True)
 
 class Locker(models.Model):
-    locker_id = models.IntegerField(primary_key=True)
+    locker_id = models.UUIDField(primary_key=True)
+    gpio = models.IntegerField()
     empty = models.BooleanField(default=True)
     paczkomat = models.ForeignKey(Paczkomat, on_delete=models.CASCADE)
 

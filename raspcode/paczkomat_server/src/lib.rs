@@ -32,13 +32,13 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 //     });
 // }
 
-pub async fn ping() {
+pub async fn ping_or_create() {
     dotenv().ok(); 
-    
+        
     // let mut data = HashMap::new();
     // data.insert("id", std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env."));
     // data.insert("ip", return_local_ipaddress().unwrap().to_string());
-    let url = format!("{}/ip/check/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
+    let url = format!("{}/paczkomat/add_paczkomat_or_check/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     let ip = return_local_ipaddress().unwrap().to_string();
@@ -52,7 +52,7 @@ pub async fn ping() {
     });
 
     let response = client
-        .patch(Url::parse(&url).unwrap())
+        .post(Url::parse(&url).unwrap())
         .json(&data)
         .send()
         .await
@@ -65,6 +65,7 @@ pub async fn ping() {
     }
     
 }
+
 
 
 // fn get_avaible_pin(pin_set: HashMap<&str, i32>) -> i32 {

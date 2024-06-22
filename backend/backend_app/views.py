@@ -37,10 +37,11 @@ class LockerViewSet(GenericViewSet):
         paczkomat = get_object_or_404(Paczkomat, id=request.data['id'])
         if len(Locker.objects.filter(paczkomat=paczkomat.id)) >= 5:
             return Response("W tym paczkomacie nie można dodawać więcej skrzynek", status=HTTP_403_FORBIDDEN)
+        print(request.data)
+        serializer = self.serializer_class(data=request.data['locker_id'], partial=True)
 
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exceptions=True)
-        serializer.save(locker_id=request.data['locker_id'], paczkomat=paczkomat)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(locker_id=request.data['locker_id'],paczkomat=paczkomat.id)
         return Response("Dodano skrzynkę", status=HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
@@ -81,27 +82,19 @@ class PackageViewSet(GenericViewSet):
         requests.patch(url=f"{paczkomat.ip_address}:{paczkomat.port}/collect/", data={"id": paczkomat.id, "gpio": locker.locker_id}) # dokończyć
 
 
-class CheckIPViewSet(GenericViewSet):
-
-    @action(detail=False, methods=['PATCH'], permission_classes=[AllowAny])
-    def check(self, request):
-        paczkomat = get_object_or_404(Paczkomat, id=request.data['id'])
-        if paczkomat.ip_address != request.data['ip_address'] or paczkomat.port != request.data["port"]:
-            paczkomat.ip_address = request.data['ip_address']
-            paczkomat.port = request.data['port']
-            paczkomat.save()
-            return Response("Zmieniona adres IP", status=HTTP_200_OK)
-        return Response("Wszystko jest ok", status=HTTP_200_OK)
-    
-
 class PaczkomatViewSet(GenericViewSet):
 
     serializer_class = PaczkomatSerializer
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
-    def add_paczkomat(self, request):
-        if Paczkomat.objects.filter(id=request.data['id']):
-            return Response("Taki paczkomat już istnieje", status=HTTP_403_FORBIDDEN)
+    def add_paczkomat_or_check(self, request):
+        if Paczkomat.objects.filter(id=request.data['id']).exists():
+            paczkomat = get_object_or_404(Paczkomat, id=request.data['id'])
+            if paczkomat.ip_address != request.data['ip_address'] or paczkomat.port != request.data["port"]:
+                paczkomat.ip_address = request.data['ip_address']
+                paczkomat.port = request.data['port']
+                paczkomat.save()
+                return Response("Zmieniona adres IP", status=HTTP_200_OK)
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()

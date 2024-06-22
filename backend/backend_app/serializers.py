@@ -1,4 +1,5 @@
 from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 from backend_app.models import User, Package, Locker, Paczkomat
 
 
@@ -9,9 +10,10 @@ class UserSerializer(ModelSerializer):
 
 
 class LockerSerializer(ModelSerializer):
+    paczkomat_id = serializers.UUIDField()
     class Meta:
         model = Locker
-        fields = "__all__"
+        fields = ("locker_id", "gpio", "paczkomat_id")
         
 
 class PackageSerializer(ModelSerializer):
