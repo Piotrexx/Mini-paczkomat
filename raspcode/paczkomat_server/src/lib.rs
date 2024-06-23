@@ -14,23 +14,25 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
     }
 }
 
-// pub async fn create_locker() {
-//     dotenv().ok(); 
-//     let mut gpio_pinouts = HashMap::new();
-//     gpio_pinouts.insert("1", 4);
-//     gpio_pinouts.insert("2", 27);
-//     gpio_pinouts.insert("3", 22);
-//     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
-//     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
-    
-
-    
-    
-//     let data = json!({
-//         "id": uuid,
-//         // "locker_id": 
-//     });
-// }
+pub async fn create_locker(gpio: u16) {
+    dotenv().ok();
+    let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
+    let client = Client::new();
+    let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
+    let locker_id = Uuid::new_v4();
+    let data = json!({
+        "paczkomat_id": uuid,
+        "locker_id": locker_id,
+        "gpio": gpio,
+    });
+    let response = client
+        .post(Url::parse(&url).unwrap())
+        .json(&data)
+        .send()
+        .await
+        .unwrap();
+    format!("Wystąpił błąd: {}", response.status());
+}
 
 pub async fn ping_or_create() {
     dotenv().ok(); 

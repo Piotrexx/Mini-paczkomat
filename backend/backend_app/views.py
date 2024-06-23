@@ -34,14 +34,14 @@ class LockerViewSet(GenericViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def add_locker(self, request):
-        paczkomat = get_object_or_404(Paczkomat, id=request.data['id'])
+        paczkomat = get_object_or_404(Paczkomat, id=request.data['paczkomat_id'])
         if len(Locker.objects.filter(paczkomat=paczkomat.id)) >= 5:
             return Response("W tym paczkomacie nie można dodawać więcej skrzynek", status=HTTP_403_FORBIDDEN)
         print(request.data)
-        serializer = self.serializer_class(data=request.data['locker_id'], partial=True)
+        serializer = self.serializer_class(data=request.data)
 
         serializer.is_valid(raise_exception=True)
-        serializer.save(locker_id=request.data['locker_id'],paczkomat=paczkomat.id)
+        serializer.save(paczkomat=paczkomat.id)
         return Response("Dodano skrzynkę", status=HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
@@ -95,7 +95,9 @@ class PaczkomatViewSet(GenericViewSet):
                 paczkomat.port = request.data['port']
                 paczkomat.save()
                 return Response("Zmieniona adres IP", status=HTTP_200_OK)
+            else: 
+                return Response("ALL GOOD", status=HTTP_200_OK)
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response("Dodano paczkomat")
+        return Response("Dodano paczkomat", status=HTTP_201_CREATED)
