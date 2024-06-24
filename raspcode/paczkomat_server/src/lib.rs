@@ -1,10 +1,19 @@
-use std::{collections::HashMap, net::IpAddr};
+use std::{net::IpAddr, fs::File, io::prelude::*};
 use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
 use serde_json::json;
 use std::net::TcpListener;
 use std::str::FromStr;
+use uuid::Uuid;
+use serde::Serialize;
+
+
+#[derive(Serialize)]
+struct Locker {
+    locker_id: String,
+    gpio: u16
+}
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
     let paczkomat_ip = local_ip();
@@ -19,12 +28,22 @@ pub async fn create_locker(gpio: u16) {
     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
-    let locker_id = Uuid::new_v4();
+    let locker_id = Uuid::new_v4().to_string();
     let data = json!({
         "paczkomat_id": uuid,
         "locker_id": locker_id,
         "gpio": gpio,
     });
+    let data_to_save = Locker {
+        locker_id: locker_id.to_string(),
+        gpio: gpio
+    };
+    let json_data = serde_json::to_string(&data_to_save).unwrap();
+
+    let mut file = File::create("lockers.json").unwrap();
+    file.write_all(json_data.as_bytes()).unwrap();
+
+
     let response = client
         .post(Url::parse(&url).unwrap())
         .json(&data)

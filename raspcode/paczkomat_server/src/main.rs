@@ -1,9 +1,4 @@
-// rust_gpiozero = "0.2.0" tylko na raspberry pi
-use reqwest::{Client, Url};
-use serde_json::json;
 use lib::{create_locker, get_avaible_port, ping_or_create, return_local_ipaddress};
-use dotenv::dotenv;
-use uuid::Uuid;
 mod lib;
 #[macro_use] extern crate rocket;
 
