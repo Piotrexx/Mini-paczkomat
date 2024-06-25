@@ -1,3 +1,5 @@
+use std::vec;
+use rust_gpiozero::*;
 use lib::{create_locker, get_avaible_port, ping_or_create, return_local_ipaddress};
 mod lib;
 #[macro_use] extern crate rocket;
@@ -13,9 +15,19 @@ async fn check() -> () {
     ping_or_create().await;
 }
 // DOKOŃCZYĆ PI)YUEIO)U*()@
-#[post("/add_locker/<gpio>")]
-async fn add_locker(gpio: u16) -> () {
-    create_locker(gpio).await
+#[post("/add_locker")]
+async fn add_locker() -> () {
+    let mut pins = vec![4, 27, 22];
+    for pin in pins {
+        match Pin::new(pin) {
+            Ok(_) => {
+                create_locker(pin).await;
+                break;
+            },
+            Err(_) => continue
+        }
+    }
+    
 }
 
 
