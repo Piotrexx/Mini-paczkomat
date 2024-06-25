@@ -19,18 +19,8 @@ async fn check() -> () {
 async fn add_locker() -> () {
     let mut pins: Vec<u16> = vec![4, 27, 22];
     for pin in pins {
-        match LED::new(pin) {
-            Ok(led) => {
-                create_locker(pin).await;
-                break;
-            },
-            Err(err) => continue
-        }
-        // let led = LED::new(pin)?;
-        // create_locker(pin).await?;
-        // break;
+            create_locker(pin).await;
     }
-    
 }
 
 
