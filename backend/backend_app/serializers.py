@@ -22,7 +22,7 @@ class PackageSerializer(ModelSerializer):
     class Meta:
         model = Package
         fields = "__all__"
-        read_only_fields = ("package_code", "date_addressed")
+        read_only_fields = ("package_code", "date_addressed", "locker")
 
 
 class PaczkomatSerializer(ModelSerializer):

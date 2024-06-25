@@ -1,4 +1,4 @@
-use std::{net::IpAddr, fs::File, io::prelude::*};
+use std::{net::IpAddr, fs::{File, OpenOptions}, io::prelude::*};
 use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
@@ -14,6 +14,13 @@ struct Locker {
     locker_id: String,
     gpio: u16
 }
+
+#[derive(Deserialize)]
+pub struct Package {
+    locker_id: String
+}
+
+
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
     let paczkomat_ip = local_ip();
@@ -34,14 +41,20 @@ pub async fn create_locker(gpio: u16) {
         "locker_id": locker_id,
         "gpio": gpio,
     });
+
+
     let data_to_save = Locker {
         locker_id: locker_id.to_string(),
         gpio: gpio
     };
     let json_data = serde_json::to_string(&data_to_save).unwrap();
 
-    let mut file = File::create("lockers.json").unwrap();
-    file.write_all(json_data.as_bytes()).unwrap();
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("lockers.json");
+
+    write!(file, ",{}", json_data);
 
 
     let response = client
@@ -86,7 +99,6 @@ pub async fn ping_or_create() {
     }
     
 }
-
 
 
 // fn get_avaible_pin(pin_set: HashMap<&str, i32>) -> i32 {

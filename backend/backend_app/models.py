@@ -45,9 +45,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]
 
-    
-    # def has__package(self):
-    #     return Package.objects.get()
 
 class Paczkomat(models.Model):
     id = models.UUIDField(primary_key=True)

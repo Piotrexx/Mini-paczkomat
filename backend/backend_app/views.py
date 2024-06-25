@@ -1,12 +1,11 @@
 from backend_app.models import User, Package, Locker, Paczkomat
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 from backend_app.serializers import UserSerializer, PackageSerializer, LockerSerializer, PaczkomatSerializer
 from django.db.utils import IntegrityError
-from uuid import uuid4
 from django.shortcuts import get_object_or_404
 import requests
 
@@ -21,6 +20,7 @@ class UserViewSet(GenericViewSet):
 
         try:
             user = serializer.save()
+            return Response("User Created")
         except IntegrityError:
             return Response(
                 "Taki user już istnieje",
@@ -41,7 +41,7 @@ class LockerViewSet(GenericViewSet):
         serializer = self.serializer_class(data=request.data)
 
         serializer.is_valid(raise_exception=True)
-        serializer.save(paczkomat=paczkomat.id)
+        serializer.save(paczkomat=paczkomat)
         return Response("Dodano skrzynkę", status=HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
@@ -53,9 +53,9 @@ class PackageViewSet(GenericViewSet):
     queryset = Package.objects.all()
     serializer_class = PackageSerializer
 
-    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['post'])
     def create_package(self, request):
-        serializer = self.serializer_class()
+        serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(locker=Locker.objects.filter(empty=True)[:1], receiver=User.objects.get(id=request.data['receiver']))
         return Response(f"Nadano przesyłkę do skrytki: {serializer.data['locker']}", status=HTTP_201_CREATED)
@@ -70,7 +70,7 @@ class PackageViewSet(GenericViewSet):
     def all_inside(self, request):
         return Response(self.serializer_class(data=Package.objects.filter(picked_up=False), many=True).data)
 
-    @action(detail=False, methods=['patch'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['patch'])
     def collect_package(self, request):
         package = Package.objects.filter(receiver=request.user, picked_up=False)[:1]
 

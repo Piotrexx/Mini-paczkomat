@@ -1,8 +1,11 @@
 use std::vec;
 use rust_gpiozero::*;
-use lib::{create_locker, get_avaible_port, ping_or_create, return_local_ipaddress};
+use lib::{create_locker, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
+use rocket::serde::json::Json;
+use serde::Deserialize;
 mod lib;
 #[macro_use] extern crate rocket;
+
 
 
 #[get("/hello/<name>/<age>")]
@@ -10,19 +13,24 @@ fn hello(name: &str, age: u8) -> String {
     format!("Hello, {} year old named {}!", age, name)
 }
 
-#[get("/check")]
+#[get("/check_or_create")]
 async fn check() -> () {
     ping_or_create().await;
 }
 
 #[post("/add_locker")]
 async fn add_locker() -> () {
-    let mut pins: Vec<u16> = vec![4, 27, 22];
+    let pins: Vec<u16> = vec![4, 27, 22];
     for pin in pins {
             create_locker(pin).await;
     }
 }
 
+
+#[post("/add_package", format="json", data="<package>")]
+fn add_package(package: Json<Package>) {
+    
+}
 
 
 
