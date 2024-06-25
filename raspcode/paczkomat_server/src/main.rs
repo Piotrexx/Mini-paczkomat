@@ -14,18 +14,21 @@ fn hello(name: &str, age: u8) -> String {
 async fn check() -> () {
     ping_or_create().await;
 }
-// DOKOŃCZYĆ PI)YUEIO)U*()@
+
 #[post("/add_locker")]
 async fn add_locker() -> () {
-    let mut pins = vec![4, 27, 22];
+    let mut pins: Vec<u16> = vec![4, 27, 22];
     for pin in pins {
-        match LED::new(pin) {
-            Ok(_) => {
-                create_locker(pin).await;
-                break;
-            },
-            Err(_) => continue
-        }
+        // match Led::new(pin) {
+        //     Ok(_) => {
+        //         create_locker(pin).await;
+        //         break;
+        //     },
+        //     Err(_) => continue
+        // }
+        let led = LED::new(pin)?;
+        create_locker(pin).await?;
+        break;
     }
     
 }
