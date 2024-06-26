@@ -1,5 +1,4 @@
 use std::vec;
-use rust_gpiozero::*;
 use lib::{create_locker, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
 use rocket::serde::json::Json;
 use serde::Deserialize;
