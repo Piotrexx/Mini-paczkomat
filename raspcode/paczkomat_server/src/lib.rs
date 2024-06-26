@@ -52,7 +52,8 @@ pub async fn create_locker(gpio: u16) {
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open("lockers.json");
+        .open("lockers.json")
+        .unwrap();
     
         let mut metadata = file.metadata()?;
         let is_empty = metadata.len() == 0;
