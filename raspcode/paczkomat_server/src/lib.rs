@@ -56,7 +56,7 @@ pub async fn create_locker(gpio: u16) {
         .unwrap();
     
         let mut metadata = file.metadata();
-        let is_empty = metadata.len() == 0;
+        let is_empty = metadata.unwrap().len() == 0;
     
         if !is_empty {
             file.write_all(b",\n");
