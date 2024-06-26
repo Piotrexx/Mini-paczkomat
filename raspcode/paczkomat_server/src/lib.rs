@@ -7,7 +7,6 @@ use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
-use std::io::Write;
 
 
 #[derive(Serialize)]
@@ -54,9 +53,15 @@ pub async fn create_locker(gpio: u16) {
         .create(true)
         .append(true)
         .open("lockers.json");
-
-    write!(file, ",{}", json_data);
-
+    
+        let mut metadata = file.metadata()?;
+        let is_empty = metadata.len() == 0;
+    
+        if !is_empty {
+            file.write_all(b",\n")?;
+        }
+    
+        file.write_all(json_data.as_bytes())?;
 
     let response = client
         .post(Url::parse(&url).unwrap())
