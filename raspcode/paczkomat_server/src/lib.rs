@@ -32,7 +32,7 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 }
 
 // dokończyć !!!
-pub fn create_package(package: Json<Package>) -> u16{
+pub async fn create_package(package: Json<Package>) -> u16{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
 
@@ -46,7 +46,14 @@ pub fn create_package(package: Json<Package>) -> u16{
 
     let json: Value = serde_json::from_str(&data).unwrap();
 
-    if let Some(_) = json.get(uuid) {
+    if let Some(_) = json.get(&uuid) {
+        let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
+        let client = Client::new();
+        let response = client
+        .post(Url::parse(&url).unwrap())
+        .send()
+        .await
+        .unwrap();
         200
     }else{
         404

@@ -62,6 +62,13 @@ class PackageViewSet(GenericViewSet):
         requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data={"paczkomat_id": paczkomat.id, "locker_id": serializer.locker.locker_id})
         return Response(f"Nadano przesyłkę do skrytki: {serializer.data['locker']}", status=HTTP_201_CREATED)
     
+    @action(detail=True, methods=['put'])
+    def change_emptyness(self, request, uuid):
+        locker = get_object_or_404(Locker, locker_id=uuid)
+        locker.empty = False
+        locker.save()
+        return Response("Zapisano", status=HTTP_200_OK)
+
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
     def all_packages(self, request):
