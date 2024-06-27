@@ -9,6 +9,7 @@ use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
+use rust_gpiozero::*;
 
 #[derive(Serialize)]
 struct Locker {
@@ -47,6 +48,7 @@ pub async fn create_package(package: Json<Package>) -> u16{
     let json: Value = serde_json::from_str(&data).unwrap();
 
     if let Some(_) = json.get(&uuid) {
+        println!("{}", json.get(&uuid));
         let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
         let client = Client::new();
         let response = client
@@ -54,6 +56,7 @@ pub async fn create_package(package: Json<Package>) -> u16{
         .send()
         .await
         .unwrap();
+        // let locker = LED::new(json.get(&uuid))
         200
     }else{
         404

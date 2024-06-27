@@ -27,8 +27,8 @@ async fn add_locker() -> () {
 // dokończyć !!!
 #[post("/add_package", format="json", data="<package>")]
 fn add_package(package: Json<Package>){
-    let status = create_package(package);
-    
+    create_package(package);
+
 }
 
 
