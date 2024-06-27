@@ -1,13 +1,14 @@
-use std::{net::IpAddr, fs::{File, OpenOptions}, io::prelude::*};
+use std::fs::File;
+use std::{net::IpAddr, fs::OpenOptions, io::prelude::*};
 use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
-use serde_json::json;
+use rocket::serde::json::Json;
+use serde_json::{json, Value};
 use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
-
 
 #[derive(Serialize)]
 struct Locker {
@@ -17,9 +18,9 @@ struct Locker {
 
 #[derive(Deserialize)]
 pub struct Package {
-    locker_id: String
+    pub locker_id: String,
+    pub paczkomat_id: String
 }
-
 
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
@@ -30,6 +31,28 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
     }
 }
 
+// dokończyć !!!
+pub fn create_package(package: Json<Package>) -> u16{
+    dotenv().ok();
+    let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
+
+    if !uuid.eq(&package.paczkomat_id) {
+        return 400;
+    }
+
+    let mut file = File::open("lockers.json").unwrap();
+    let mut data = String::new();
+    file.read_to_string(&mut data);
+
+    let json: Value = serde_json::from_str(&data).unwrap();
+
+    if let Some(_) = json.get(uuid) {
+        200
+    }else{
+        404
+    }
+}
+    
 pub async fn create_locker(gpio: u16) {
     dotenv().ok();
     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
@@ -55,14 +78,14 @@ pub async fn create_locker(gpio: u16) {
         .open("lockers.json")
         .unwrap();
     
-        let mut metadata = file.metadata();
+        let metadata = file.metadata();
         let is_empty = metadata.unwrap().len() == 0;
     
         if !is_empty {
-            file.write_all(b",\n");
+            file.write_all(b",\n").expect("nie udało się zapisać pliku");
         }
     
-        file.write_all(json_data.as_bytes());
+        file.write_all(json_data.as_bytes()).expect("Nie udało się zapisać pliku");
 
     let response = client
         .post(Url::parse(&url).unwrap())

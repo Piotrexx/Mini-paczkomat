@@ -58,6 +58,8 @@ class PackageViewSet(GenericViewSet):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(locker=Locker.objects.filter(empty=True)[:1], receiver=User.objects.get(id=request.data['receiver']))
+        paczkomat = Paczkomat.objects.get(id=serializer.locker.paczkomat)
+        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data={"paczkomat_id": paczkomat.id, "locker_id": serializer.locker.locker_id})
         return Response(f"Nadano przesyłkę do skrytki: {serializer.data['locker']}", status=HTTP_201_CREATED)
     
 
