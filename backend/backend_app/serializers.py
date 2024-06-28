@@ -17,12 +17,10 @@ class LockerSerializer(ModelSerializer):
         
 
 class PackageSerializer(ModelSerializer):
-    receiver = UserSerializer(read_only=True)
-    locker = LockerSerializer()
     class Meta:
         model = Package
-        fields = "__all__"
-        read_only_fields = ("package_code", "date_addressed", "locker")
+        fields = ("package_name", "receiver")
+        read_only_fields = ("package_code", "date_addressed","locker")
 
 
 class PaczkomatSerializer(ModelSerializer):

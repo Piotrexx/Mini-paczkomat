@@ -57,10 +57,12 @@ class PackageViewSet(GenericViewSet):
     def create_package(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(locker=Locker.objects.filter(empty=True)[:1], receiver=User.objects.get(id=request.data['receiver']))
-        paczkomat = Paczkomat.objects.get(id=serializer.locker.paczkomat)
-        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data={"paczkomat_id": paczkomat.id, "locker_id": serializer.locker.locker_id})
-        return Response(f"Nadano przesyłkę do skrytki: {serializer.data['locker']}", status=HTTP_201_CREATED)
+        locker = Locker.objects.filter(empty=True)[:1][0]
+        serializer.save(locker=locker, receiver=User.objects.get(id=request.data['receiver']))
+        paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)
+        print(f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package")
+        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data={"paczkomat_id": str(paczkomat.id), "locker_id": str(locker.locker_id)}, headers= {"Content-Type": "application/json"})
+        return Response(f"Nadano przesyłkę do skrytki: {locker.locker_id}", status=HTTP_201_CREATED)
     
     @action(detail=True, methods=['put'])
     def change_emptyness(self, request, uuid):
