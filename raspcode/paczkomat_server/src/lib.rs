@@ -9,7 +9,7 @@ use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
-use rust_gpiozero::*;
+// use rust_gpiozero::*;
 
 #[derive(Serialize)]
 struct Locker {
@@ -55,7 +55,8 @@ pub async fn create_package(package: Json<Package>) -> u16{
         .send()
         .await
         .unwrap();
-        // let locker = LED::new(json.get(&uuid))
+        let locker = LED::new(json.get(&uuid));
+        locker::on();
         200
     }else{
         404

@@ -11,7 +11,7 @@ reqwest = { version = "0.12", features = ["json"] }
 dotenv = "0.15.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1"
-rust_gpiozero = "0.2.1"
+
 
 [dependencies.uuid]
 version = "1.8.0"
@@ -24,3 +24,6 @@ features = [
 [dependencies.rocket]
 version = "0.5.0-rc.1"
 features = ["json"]
+
+[target.'cfg(unix)'.dependencies]
+rust_gpiozero = "0.2.1"
