@@ -36,7 +36,6 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 pub async fn create_package(package: Json<Package>) -> u16{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
-    println!("{}", package);
     if !uuid.eq(&package.paczkomat_id) {
         return 400;
     }
