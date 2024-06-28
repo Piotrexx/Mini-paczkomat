@@ -8,6 +8,7 @@ from backend_app.serializers import UserSerializer, PackageSerializer, LockerSer
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
 import requests
+import json
 
 class UserViewSet(GenericViewSet):
     queryset = User.objects.all()
@@ -61,7 +62,10 @@ class PackageViewSet(GenericViewSet):
         serializer.save(locker=locker, receiver=User.objects.get(id=request.data['receiver']))
         paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)
         print(f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package")
-        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data={"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}, headers= {"Content-Type": "application/json"})
+        print(locker.locker_id)
+        print(paczkomat.id)
+        print(locker.paczkomat.id)
+        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data=json.dumps({"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}), headers= {"Content-Type": "application/json"})
         return Response(f"Nadano przesyłkę do skrytki: {locker.locker_id}", status=HTTP_201_CREATED)
     
     @action(detail=True, methods=['put'])

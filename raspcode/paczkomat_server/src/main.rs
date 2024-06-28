@@ -1,6 +1,6 @@
-use std::vec;
+use std::{io::Cursor, vec};
 use lib::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
-use rocket::serde::json::Json;
+use rocket::{futures::io::Cursor, serde::json::Json, Response};
 mod lib;
 #[macro_use] extern crate rocket;
 
@@ -27,8 +27,11 @@ async fn add_locker() -> () {
 // dokończyć !!!
 #[post("/add_package", format="json", data="<package>")]
 fn add_package(package: Json<Package>){
-    create_package(package);
-
+    let body = "MEssage";
+    Response::build()
+    .sized_body(body.len(), Cursor::new(body))
+    .status(create_package(package))
+    .finalize()
 }
 
 
