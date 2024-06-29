@@ -59,6 +59,7 @@ pub async fn create_package(package: Json<Package>) -> u16{
         locker::on();
         200
     }else{
+        println!("{:?}", json.get(&uuid));
         404
     }
 }
