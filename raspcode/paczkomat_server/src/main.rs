@@ -30,7 +30,10 @@ async fn add_package(package: Json<Package>) -> String{
     // format!("Code Returned: {}", create_package(package).await.unwrap())
     match create_package(package).await {
         Ok(code) => format!("Code: {}", code),
-        Err(err) => println!("Error: {}", err)
+        Err(err) => {
+            println!("Error: {}", err);
+            format!("Error: {}", err)
+        }
     }
 }
 
