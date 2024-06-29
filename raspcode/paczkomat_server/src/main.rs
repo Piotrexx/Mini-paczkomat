@@ -27,7 +27,7 @@ async fn add_locker() -> () {
 // dokończyć !!!
 #[post("/add_package", format="json", data="<package>")]
 async fn add_package(package: Json<Package>) -> String{
-    format!("Code Returned: {}", create_package(package).await)
+    format!("Code Returned: {}", create_package(package).await.unwrap())
 }
 
 
