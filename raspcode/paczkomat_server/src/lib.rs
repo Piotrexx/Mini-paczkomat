@@ -9,7 +9,7 @@ use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
-// use rust_gpiozero::*;
+use rust_gpiozero::*;
 
 #[derive(Serialize)]
 struct Locker {
