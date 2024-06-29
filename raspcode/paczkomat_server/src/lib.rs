@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::fs::File;
 use std::{net::IpAddr, fs::OpenOptions, io::prelude::*};
 use local_ip_address::local_ip;
@@ -33,19 +34,21 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 }
 
 // dokończyć !!!
-pub async fn create_package(package: Json<Package>) -> u16{
+pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
-        return 400;
+        return Err(String::from("Error: 400"));
     }
 
     let mut file = File::open("lockers.json").unwrap();
     let mut data = String::new();
     file.read_to_string(&mut data);
 
-    let json: Value = serde_json::from_str(&data).unwrap();
-
+    let json: Value = match serde_json::from_str(&data) {
+        Ok(value) => value,
+        Err(err) => return Err(err.to_string()),
+    };
     if let Some(_) = json.get(&uuid) {
         println!("{:?}", json.get(&uuid).unwrap());
         let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
@@ -58,10 +61,10 @@ pub async fn create_package(package: Json<Package>) -> u16{
         let locker = LED::new(u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
         println!("{:?}", u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
         locker.on();
-        200
+        Ok(200)
     }else{
         println!("{:?}", json.get(&uuid).unwrap());
-        404
+        return Err(String::from("Error: 404"));
     }
 }
     
