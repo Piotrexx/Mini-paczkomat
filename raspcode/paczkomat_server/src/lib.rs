@@ -47,7 +47,7 @@ pub async fn create_package(package: Json<Package>) -> u16{
     let json: Value = serde_json::from_str(&data).unwrap();
 
     if let Some(_) = json.get(&uuid) {
-        println!("{:?}", json.get(&uuid));
+        println!("{:?}", json.get(&uuid).unwrap());
         let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
         let client = Client::new();
         let response = client
@@ -55,11 +55,11 @@ pub async fn create_package(package: Json<Package>) -> u16{
         .send()
         .await
         .unwrap();
-        let locker = LED::new(json.get(&uuid));
+        let locker = LED::new(json.get(&uuid).unwrap());
         locker.on();
         200
     }else{
-        println!("{:?}", json.get(&uuid));
+        println!("{:?}", json.get(&uuid).unwrap());
         404
     }
 }
