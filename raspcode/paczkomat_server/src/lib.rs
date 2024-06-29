@@ -56,7 +56,7 @@ pub async fn create_package(package: Json<Package>) -> u16{
         .await
         .unwrap();
         let locker = LED::new(json.get(&uuid));
-        locker::on();
+        locker.on();
         200
     }else{
         println!("{:?}", json.get(&uuid));
