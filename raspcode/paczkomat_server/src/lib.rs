@@ -55,8 +55,8 @@ pub async fn create_package(package: Json<Package>) -> u16{
         .send()
         .await
         .unwrap();
-        let locker = LED::new(u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).ok());
-        println!("{:?}", u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).ok());
+        let locker = LED::new(u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
+        println!("{:?}", u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
         locker.on();
         200
     }else{
