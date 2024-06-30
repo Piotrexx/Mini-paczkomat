@@ -1,5 +1,5 @@
 use std::vec;
-use lib::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
+use lib::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Package};
 use rocket::serde::json::Json;
 mod lib;
 #[macro_use] extern crate rocket;
@@ -24,6 +24,11 @@ async fn add_locker() -> () {
     }
 }
 
+#[get("/db_setup_test")]
+fn db_setup_test() -> String {
+    setup_db().unwrap()
+}
+
 // dokończyć !!!
 #[post("/add_package", format="json", data="<package>")]
 async fn add_package(package: Json<Package>) -> String{
@@ -45,6 +50,6 @@ fn rocket() -> _ {
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![hello, check, add_locker, add_package])
+    .mount("/", routes![hello, check, add_locker, add_package, db_setup_test])
 }
 

@@ -4,4 +4,4 @@ venv
 .env
 target
 Cargo.lock
-lockers.json
+lockers.sqlite3

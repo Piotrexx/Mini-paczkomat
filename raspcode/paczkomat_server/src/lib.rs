@@ -1,21 +1,20 @@
-use std::error::Error;
 use std::fs::File;
-use std::{net::IpAddr, fs::OpenOptions, io::prelude::*};
+use std::{net::IpAddr, io::prelude::*};
 use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
-use rocket::http::hyper::server::conn;
 use rocket::serde::json::Json;
 use serde_json::{json, Value};
 use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
+use anyhow::Result;
+use sqlite::Connection;
 // use rust_gpiozero::*;
-// use std::path::Path;
 
 #[derive(Serialize)]
-struct Locker {
+pub struct Locker {
     locker_id: String,
     gpio: u16
 }
@@ -70,7 +69,7 @@ pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
     }
 }
     
-pub async fn create_locker(gpio: u16) -> Locker {
+pub async fn create_locker(gpio: u16) -> Result<String> {
     dotenv().ok();
     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
@@ -83,10 +82,10 @@ pub async fn create_locker(gpio: u16) -> Locker {
     });
 
 
-    let data_to_save = Locker {
-        locker_id: locker_id.to_string(),
-        gpio: gpio
-    };
+    // let data_to_save = Locker {
+    //     locker_id: locker_id.to_string(),
+    //     gpio: gpio
+    // };
 
     let connection = sqlite::open("locekrs.sqlite3")?;
     let query = format!("
@@ -96,14 +95,13 @@ pub async fn create_locker(gpio: u16) -> Locker {
 
 
     let response = client
-        .post(Url::parse(&url).unwrap())
+        .post(Url::parse(&url)?)
         .json(&data)
         .send()
         .await
-        .unwrap();
-    format!("Wystąpił błąd: {}", response.status());
+        ?;
 
-    data_to_save
+    Ok(format!("Dane zostały zapisane poprawnie, \n Kod odpowiedzi requesta: {}", response.status()))
 }
 
 pub async fn ping_or_create() {
@@ -174,16 +172,16 @@ fn port_is_available(port: u16) -> bool{
 }
 
 
-fn setup_db() {
-    let file = File::create("lockers.sqlite3")?;
-    let connection = sqlite::Connection("lockers.sqlite3")?;
+pub fn setup_db()  -> Result<String>{
+    File::create("lockers.sqlite3")?;
+    let connection = Connection::open("lockers.sqlite3")?;
     let query = "
     CREATE TABLE lockers (
-    locker_id VARCHAR(50) NOT NULL, 
-    gpio INT
-    PRIMARY_KEY(locker_id)
-    )
+        lockerid VARCHAR(50) PRIMARY KEY,
+        gpio INT
+    );
     ";
     connection.execute(query)?;
+    Ok(format!("Database ready !"))
 }
 
