@@ -4,13 +4,15 @@ use std::{net::IpAddr, fs::OpenOptions, io::prelude::*};
 use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
+use rocket::http::hyper::server::conn;
 use rocket::serde::json::Json;
 use serde_json::{json, Value};
 use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
-use rust_gpiozero::*;
+// use rust_gpiozero::*;
+// use std::path::Path;
 
 #[derive(Serialize)]
 struct Locker {
@@ -58,9 +60,9 @@ pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
         .send()
         .await
         .unwrap();
-        let locker = LED::new(u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
+        // let locker = LED::new(u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
         println!("{:?}", u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
-        locker.on();
+        // locker.on();
         Ok(200)
     }else{
         println!("{:?}", json.get(&uuid).unwrap());
@@ -68,7 +70,7 @@ pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
     }
 }
     
-pub async fn create_locker(gpio: u16) {
+pub async fn create_locker(gpio: u16) -> Locker {
     dotenv().ok();
     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
@@ -85,22 +87,13 @@ pub async fn create_locker(gpio: u16) {
         locker_id: locker_id.to_string(),
         gpio: gpio
     };
-    let json_data = serde_json::to_string(&data_to_save).unwrap();
 
-    let mut file = OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("lockers.json")
-        .unwrap();
-    
-        let metadata = file.metadata();
-        let is_empty = metadata.unwrap().len() == 0;
-    
-        if !is_empty {
-            file.write_all(b",\n").expect("nie udało się zapisać pliku");
-        }
-    
-        file.write_all(json_data.as_bytes()).expect("Nie udało się zapisać pliku");
+    let connection = sqlite::open("locekrs.sqlite3")?;
+    let query = format!("
+        INSERT INTO lockers VALUES ('{locker_id}', {gpio})
+    ");
+    connection.execute(query)?;
+
 
     let response = client
         .post(Url::parse(&url).unwrap())
@@ -109,6 +102,8 @@ pub async fn create_locker(gpio: u16) {
         .await
         .unwrap();
     format!("Wystąpił błąd: {}", response.status());
+
+    data_to_save
 }
 
 pub async fn ping_or_create() {
@@ -176,5 +171,19 @@ fn port_is_available(port: u16) -> bool{
         },
         Err(_) => false
     }
+}
+
+
+fn setup_db() {
+    let file = File::create("lockers.sqlite3")?;
+    let connection = sqlite::Connection("lockers.sqlite3")?;
+    let query = "
+    CREATE TABLE lockers (
+    locker_id VARCHAR(50) NOT NULL, 
+    gpio INT
+    PRIMARY_KEY(locker_id)
+    )
+    ";
+    connection.execute(query)?;
 }
 
