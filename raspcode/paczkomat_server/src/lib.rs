@@ -87,7 +87,7 @@ pub async fn create_locker(gpio: u16) -> Result<String> {
     //     gpio: gpio
     // };
 
-    let connection = sqlite::open("locekrs.sqlite3")?;
+    let connection = sqlite::open("lockers.sqlite3")?;
     let query = format!("
         INSERT INTO lockers VALUES ('{locker_id}', {gpio})
     ");
