@@ -28,19 +28,15 @@ async fn add_locker() -> () {
 #[get("/all_lockers")]
 fn all_lockers() {
     let query = "SELECT * FROM lockers";
-    let data: Vec<String> = Vec::new();
+    // let data: Vec<String> = Vec::new();
     let connection = sqlite::open("lockers.sqlite3").unwrap();
 
-    for row in connection
-    .prepare(query)
-    .unwrap()
-    .into_iter()
-    .bind((1, 50))
-    .unwrap()
-    .map(|row| row.unwrap()){
-    println!("name = {}", row.read::<&str, _>("lockerid"));
-    println!("age = {}", row.read::<i64, _>("gpio"));
-}
+    let mut statement = connection.prepare(query).unwrap();
+    
+    while let Ok(State::Row) = statement.next() {
+        println!("lockerid = {}", statement.read::<String, _>("lockerid").unwrap());
+        println!("gpio = {}", statement.read::<i64, _>("gpio").unwrap());
+    }
 }
 
 #[get("/db_setup_test")]
