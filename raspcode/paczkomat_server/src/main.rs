@@ -1,6 +1,7 @@
 use std::vec;
 use lib::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Package};
 use rocket::serde::json::Json;
+use sqlite::State;
 mod lib;
 #[macro_use] extern crate rocket;
 
@@ -22,6 +23,24 @@ async fn add_locker() -> () {
     for pin in pins {
             create_locker(pin).await;
     }
+}
+
+#[get("/all_lockers")]
+fn all_lockers() {
+    let query = "SELECT * FROM lockers";
+    let data: Vec<String> = Vec::new();
+    let connection = sqlite::open("lockers.sqlite3").unwrap();
+
+    for row in connection
+    .prepare(query)
+    .unwrap()
+    .into_iter()
+    .bind((1, 50))
+    .unwrap()
+    .map(|row| row.unwrap()){
+    println!("name = {}", row.read::<&str, _>("lockerid"));
+    println!("age = {}", row.read::<i64, _>("gpio"));
+}
 }
 
 #[get("/db_setup_test")]
@@ -50,6 +69,6 @@ fn rocket() -> _ {
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![hello, check, add_locker, add_package, db_setup_test])
+    .mount("/", routes![hello, check, add_locker, add_package, db_setup_test, all_lockers])
 }
 
