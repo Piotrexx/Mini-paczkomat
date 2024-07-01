@@ -28,7 +28,6 @@ async fn add_locker() -> () {
 #[get("/all_lockers")]
 fn all_lockers() {
     let query = "SELECT * FROM lockers";
-    // let data: Vec<String> = Vec::new();
     let connection = sqlite::open("lockers.sqlite3").unwrap();
 
     let mut statement = connection.prepare(query).unwrap();

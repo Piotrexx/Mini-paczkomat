@@ -11,7 +11,7 @@ use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use anyhow::Result;
 use sqlite::Connection;
-// use rust_gpiozero::*;
+use sqlite::State;
 
 #[derive(Serialize)]
 pub struct Locker {
@@ -34,6 +34,8 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
     }
 }
 
+
+
 // dokończyć !!!
 pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
     dotenv().ok();
@@ -41,32 +43,50 @@ pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
     if !uuid.eq(&package.paczkomat_id) {
         return Err(String::from("Error: 400"));
     }
-
-    let mut file = File::open("lockers.json").unwrap();
-    let mut data = String::new();
-    file.read_to_string(&mut data);
-
-    let json: Value = match serde_json::from_str(&data) {
-        Ok(value) => value,
-        Err(err) => return Err(err.to_string()),
-    };
-    if let Some(_) = json.get(&uuid) {
-        println!("{:?}", json.get(&uuid).unwrap());
-        let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
-        let client = Client::new();
-        let response = client
-        .post(Url::parse(&url).unwrap())
-        .send()
-        .await
-        .unwrap();
-        // let locker = LED::new(u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
-        println!("{:?}", u8::try_from(json.get(&uuid).unwrap().as_i64().unwrap()).unwrap());
-        // locker.on();
-        Ok(200)
-    }else{
-        println!("{:?}", json.get(&uuid).unwrap());
-        return Err(String::from("Error: 404"));
+    // dokończyć  załącznie diody !!!
+    let exists = locker_exists(&package.locker_id);
+    if exists == false {
+        return Err(String::from("Error, przesłane ID skrzynki nie istnieje"))
     }
+    let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
+    let client = Client::new();
+    let response = client
+    .post(Url::parse(&url).unwrap())
+    .send()
+    .await
+    .unwrap();
+    if cfg!(unix) {
+        // use rust_gpiozero::*;
+        // let locker = LED::new(return_gpio_pin(&package.locker_id));
+        // locker.on();
+    }
+
+        Ok(200)
+}
+
+
+fn return_gpio_pin(locker_id: &String) -> Result<u8> {
+    let query = format!("SELECT gpio FROM lockers WHERE lockerid LIKE '{locker_id}';");
+    let connection = sqlite::open("lockers.sqlite3")?;
+    let mut statement = connection.prepare(query)?;
+    return Ok(u8::try_from(statement.read::<i64, _>("gpio")?)?);
+}
+
+fn locker_exists(locker_id: &String) -> bool {
+    let query = "SELECT * FROM lockers";
+    let connection = sqlite::open("lockers.sqlite3").unwrap();
+    let mut statement = connection.prepare(query).unwrap();
+    let mut exists = false;
+    
+    while let Ok(State::Row) = statement.next(){
+        if locker_id.clone() != statement.read::<String, _>("lockerid").unwrap() {
+            continue;
+        }else {
+            exists = true;
+            break;    
+        }
+    }
+    exists
 }
     
 pub async fn create_locker(gpio: u16) -> Result<String> {
