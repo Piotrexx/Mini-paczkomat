@@ -62,6 +62,7 @@ fn led_test() {
     use rust_gpiozero::*;
     let mut locker = LED::new(4);
     locker.blink(2.0, 3.0);
+    locker.off()
 }
 
 
