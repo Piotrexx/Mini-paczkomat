@@ -60,7 +60,7 @@ async fn add_package(package: Json<Package>) -> String{
 #[get("/led_on")]
 fn led_test() {
     use rust_gpiozero::*;
-    let locker = LED::new(4);
+    let mut locker = LED::new(4);
     locker.blink(2.0, 3.0);
 }
 
