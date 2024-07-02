@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::{net::IpAddr, io::prelude::*};
+use std::{net::IpAddr, io::prelude::*, thread};
 use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
@@ -61,7 +61,10 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
         println!("raz dwa trzy");
         use rust_gpiozero::*;
         let locker = LED::new(return_gpio_pin(&package.locker_id).unwrap());
-        locker.on();
+        let led_thread = thread::spawn(move || {
+            locker.on();
+            loop {}
+        });
         return Ok(String::from("LED załączony"))
     }
     println!("o co chodzi");

@@ -65,7 +65,8 @@ class PackageViewSet(GenericViewSet):
         print(locker.locker_id)
         print(paczkomat.id)
         print(locker.paczkomat.id)
-        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data=json.dumps({"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}), headers= {"Content-Type": "application/json"})
+        response = requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data=json.dumps({"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}), headers= {"Content-Type": "application/json"})
+        print(response.content)
         return Response(f"Nadano przesyłkę do skrytki: {locker.locker_id}", status=HTTP_201_CREATED)
     
     @action(detail=True, methods=['put'])
