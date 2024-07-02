@@ -37,7 +37,7 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 
 
 // dokończyć !!!
-pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
+pub async fn create_package(package: Json<Package>) -> Result<String, String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
@@ -56,12 +56,13 @@ pub async fn create_package(package: Json<Package>) -> Result<u16, String>{
     .await
     .unwrap();
     if cfg!(unix) {
-        // use rust_gpiozero::*;
-        // let locker = LED::new(return_gpio_pin(&package.locker_id));
-        // locker.on();
+        use rust_gpiozero::*;
+        let locker = LED::new(return_gpio_pin(&package.locker_id));
+        locker.on();
+        return Ok(String::from("LED załączony"))
     }
 
-        Ok(200)
+        Ok(String::from("Wszystko poszło (w trybie windows)"))
 }
 
 
