@@ -48,6 +48,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
     if exists == false {
         return Err(String::from("Error, przesłane ID skrzynki nie istnieje"))
     }
+    println!("before sending");
     let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
     let client = Client::new();
     let response = client
@@ -55,14 +56,16 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
     .send()
     .await
     .unwrap();
+    println!("test lol xd");
     if cfg!(unix) {
+        println!("raz dwa trzy");
         use rust_gpiozero::*;
         let locker = LED::new(return_gpio_pin(&package.locker_id).unwrap());
         locker.on();
         return Ok(String::from("LED załączony"))
     }
-
-        Ok(String::from("Wszystko poszło (w trybie windows)"))
+    println!("o co chodzi");
+    Ok(String::from("Wszystko poszło (w trybie windows)"))
 }
 
 
