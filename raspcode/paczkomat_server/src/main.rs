@@ -57,6 +57,14 @@ async fn add_package(package: Json<Package>) -> String{
 }
 
 
+#[get("/led_on")]
+fn led_test() {
+    use rust_gpiozero::*;
+    let locker = LED::new(4);
+    locker.blink(2.0, 3.0);
+}
+
+
 
 #[launch]
 fn rocket() -> _ {
@@ -64,6 +72,6 @@ fn rocket() -> _ {
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![hello, check, add_locker, add_package, db_setup_test, all_lockers])
+    .mount("/", routes![hello, check, add_locker, add_package, db_setup_test, all_lockers, led_test])
 }
 

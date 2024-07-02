@@ -64,6 +64,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
         let led_thread = thread::spawn(move || {
             println!("czemu się nie świeci");
             locker.on();
+            println!("test");
             loop {}
         });
         return Ok(String::from("LED załączony"))
