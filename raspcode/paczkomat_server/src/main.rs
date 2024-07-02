@@ -4,6 +4,7 @@ use rocket::{futures::lock, serde::json::Json};
 use sqlite::State;
 mod lib;
 #[macro_use] extern crate rocket;
+use tokio;
 
 
 
@@ -61,10 +62,13 @@ async fn add_package(package: Json<Package>) -> String{
 fn led_test() {
     use rust_gpiozero::*;
     let mut locker = LED::new(4);
-    locker.on();
-    loop {
-        
-    }
+    tokio::spawn(async move {
+        locker.on();
+        loop {
+            // Do nothing here (or add minimal logic)
+            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        }
+    });
 }
 
 
