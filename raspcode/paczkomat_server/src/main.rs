@@ -1,6 +1,6 @@
 use std::vec;
 use lib::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Package};
-use rocket::serde::json::Json;
+use rocket::{futures::lock, serde::json::Json};
 use sqlite::State;
 mod lib;
 #[macro_use] extern crate rocket;
@@ -61,7 +61,10 @@ async fn add_package(package: Json<Package>) -> String{
 fn led_test() {
     use rust_gpiozero::*;
     let mut locker = LED::new(4);
-    locker.on()
+    locker.on();
+    loop {
+        
+    }
 }
 
 
