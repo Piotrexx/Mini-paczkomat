@@ -62,6 +62,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
         use rust_gpiozero::*;
         let locker = LED::new(return_gpio_pin(&package.locker_id).unwrap());
         let led_thread = thread::spawn(move || {
+            println!("czemu się nie świeci");
             locker.on();
             loop {}
         });
