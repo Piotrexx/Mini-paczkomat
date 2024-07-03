@@ -20,9 +20,9 @@ async fn check() -> () {
 
 #[post("/add_locker")]
 async fn add_locker() -> () {
-    let gpios: Vec<u8> = vec![4, 27, 22];
-    for gpio in gpios {
-            create_locker(gpio).await;
+    let pins: Vec<u16> = vec![4, 27, 22];
+    for pin in pins {
+            create_locker(pin).await;
     }
 }
 
