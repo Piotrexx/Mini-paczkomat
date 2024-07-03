@@ -17,7 +17,7 @@ mod test {
         use rust_gpiozero::*;
         use std::thread::sleep;
         use std::time::Duration;
-        let gpios: Vec<u8> = vec![27, 4, 22];
+        let gpios: Vec<u8> = vec![27, 23, 22];
         for gpio in gpios {
             let mut led = LED::new(gpio);
             led.on();
