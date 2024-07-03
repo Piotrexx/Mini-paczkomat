@@ -13,6 +13,7 @@ use anyhow::Result;
 use sqlite::Connection;
 use sqlite::State;
 
+
 #[derive(Serialize)]
 pub struct Locker {
     locker_id: String,
