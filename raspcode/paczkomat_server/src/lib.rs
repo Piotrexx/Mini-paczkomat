@@ -80,6 +80,8 @@ fn return_gpio_pin(locker_id: &String) -> Result<u8> {
     let query = format!("SELECT gpio FROM lockers WHERE lockerid LIKE '{locker_id}';");
     let connection = sqlite::open("lockers.sqlite3")?;
     let mut statement = connection.prepare(query)?;
+    println!("gpio: {}", statement.read::<i64, _>("gpio")?);
+    println!("gpio converted: {}", u8::try_from(statement.read::<i64, _>("gpio")?)?);
     return Ok(u8::try_from(statement.read::<i64, _>("gpio")?)?);
 }
 
