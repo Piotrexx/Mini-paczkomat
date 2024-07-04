@@ -61,12 +61,13 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
     println!("test lol xd");
     if cfg!(unix) {
         println!("raz dwa trzy");
-        let led_thread = thread::spawn(move || {
-            println!("czemu się nie świeci");
-            let locker = LED::new(return_gpio_pin(&package.locker_id).unwrap());    
-            println!("test");
-            loop {locker.on();}
-        });
+        tokio::spawn(async move {
+            let mut locker = LED::new(locker_pin);
+            println!("test1234242");
+            loop {
+              locker.on().await;
+            }
+          });
         return Ok(String::from("LED załączony"))
     }
     println!("o co chodzi");
