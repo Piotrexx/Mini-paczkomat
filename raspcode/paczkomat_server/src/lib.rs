@@ -12,6 +12,7 @@ use serde::{Serialize, Deserialize};
 use anyhow::Result;
 use sqlite::Connection;
 use sqlite::State;
+use rust_gpiozero::*;
 
 
 #[derive(Serialize)]
@@ -60,12 +61,11 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
     println!("test lol xd");
     if cfg!(unix) {
         println!("raz dwa trzy");
-        use rust_gpiozero::*;
-        let locker = LED::new(return_gpio_pin(&package.locker_id).unwrap());
         let led_thread = thread::spawn(move || {
             println!("czemu się nie świeci");
-            locker.on();
+            let locker = LED::new(return_gpio_pin(&package.locker_id).unwrap());    
             println!("test");
+            locker.on();
             loop {}
         });
         return Ok(String::from("LED załączony"))

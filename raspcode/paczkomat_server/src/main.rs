@@ -20,7 +20,7 @@ async fn check() -> () {
 
 #[post("/add_locker")]
 async fn add_locker() -> () {
-    let pins: Vec<u16> = vec![4, 27, 22];
+    let pins: Vec<u16> = vec![23, 27, 22];
     for pin in pins {
             create_locker(pin).await;
     }
