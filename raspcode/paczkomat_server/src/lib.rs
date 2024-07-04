@@ -51,7 +51,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
         return Err(String::from("Error, przesłane ID skrzynki nie istnieje"))
     }
     println!("before sending");
-    let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), uuid);
+    let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), &package.locker_id);
     let client = Client::new();
     let response = client
     .post(Url::parse(&url).unwrap())
@@ -65,8 +65,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
             println!("czemu się nie świeci");
             let locker = LED::new(return_gpio_pin(&package.locker_id).unwrap());    
             println!("test");
-            locker.on();
-            loop {}
+            loop {locker.on();}
         });
         return Ok(String::from("LED załączony"))
     }
