@@ -65,7 +65,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
             let mut locker = LED::new(locker_pin);
             println!("test1234242");
             loop {
-              locker.on().await;
+              locker.on();
             }
           });
         return Ok(String::from("LED załączony"))
