@@ -77,7 +77,8 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
 
 
 fn return_gpio_pin(locker_id: &String) -> Result<u8> {
-    let query = format!("SELECT gpio FROM lockers WHERE lockerid LIKE '{locker_id}';");
+    let query = format!("SELECT gpio FROM lockers WHERE lockerid LIKE '{locker_id}' LIMIT 1;");
+    println!("{}", query);
     let connection = sqlite::open("lockers.sqlite3")?;
     let mut statement = connection.prepare(query)?;
     println!("gpio: {}", statement.read::<i64, _>("gpio")?);
