@@ -63,6 +63,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
         let locker_pin = return_gpio_pin(&package.locker_id).unwrap();
         println!("raz dwa trzy");
         tokio::spawn(async move {
+            println!("{}", locker_pin);
             let mut locker = LED::new(locker_pin);
             println!("test1234242");
             locker.on();
