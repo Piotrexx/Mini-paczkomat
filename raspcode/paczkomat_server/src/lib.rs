@@ -60,6 +60,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
     .unwrap();
     println!("test lol xd");
     if cfg!(unix) {
+        let locker_pin = return_gpio_pin(&package.locker_id).unwrap();
         println!("raz dwa trzy");
         tokio::spawn(async move {
             let mut locker = LED::new(locker_pin);
@@ -68,7 +69,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
               locker.on();
             }
           });
-        return Ok(String::from("LED załączony"))
+        return Ok(String::from("LED załączony"));
     }
     println!("o co chodzi");
     Ok(String::from("Wszystko poszło (w trybie windows)"))
