@@ -82,8 +82,8 @@ fn return_gpio_pin(locker_id: &String) -> Result<u8> {
     let connection = sqlite::open("lockers.sqlite3")?;
     let mut statement = connection.prepare(query)?;
     println!("gpio: {}", statement.read::<i64, _>("gpio")?);
-    println!("gpio converted: {}", u8::try_from(statement.read::<i64, _>("gpio")?)?);
-    return Ok(u8::try_from(statement.read::<i64, _>("gpio")?)?);
+    println!("gpio converted: {}", statement.read::<u8, _>("gpio")?);
+    return Ok(statement.read::<u8, _>("gpio")?);
 }
 
 fn locker_exists(locker_id: &String) -> bool {
@@ -212,7 +212,7 @@ pub fn setup_db()  -> Result<String>{
     let query = "
     CREATE TABLE lockers (
         lockerid VARCHAR(50) PRIMARY KEY,
-        gpio INT
+        gpio TINYINT
     );
     ";
     connection.execute(query)?;

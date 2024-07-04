@@ -35,7 +35,7 @@ fn all_lockers() {
     
     while let Ok(State::Row) = statement.next() {
         println!("lockerid = {}", statement.read::<String, _>("lockerid").unwrap());
-        println!("gpio = {}", statement.read::<i64, _>("gpio").unwrap());
+        println!("gpio = {}", statement.read::<u8, _>("gpio").unwrap());
     }
 }
 
