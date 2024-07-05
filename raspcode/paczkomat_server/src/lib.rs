@@ -1,17 +1,15 @@
 use std::fs::File;
-use std::{net::IpAddr, io::prelude::*, thread};
+use std::net::IpAddr;
 use local_ip_address::local_ip;
 use dotenv::dotenv;
 use reqwest::{Client, Url};
 use rocket::serde::json::Json;
-use serde_json::{json, Value};
+use serde_json::json;
 use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use anyhow::Result;
-use sqlite::Connection;
-use sqlite::State;
 use rust_gpiozero::*;
 
 
@@ -39,28 +37,28 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 
 
 // dokończyć !!!
-pub async fn create_package(package: Json<Package>) -> Result<String, String>{
+pub async fn create_package(package: Json<Package>) -> Result<String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
-        return Err(String::from("Error: 400"));
+        return Ok(String::from("Error: 400"));
     }
     // dokończyć  załącznie diody !!!
-    let exists = locker_exists(&package.locker_id);
+    let exists = locker_exists(&package.locker_id).await;
     if exists == false {
-        return Err(String::from("Error, przesłane ID skrzynki nie istnieje"))
+        return Ok(String::from("Error, przesłane ID skrzynki nie istnieje"))
     }
     println!("before sending");
     let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), &package.locker_id);
     let client = Client::new();
     let response = client
-    .post(Url::parse(&url).unwrap())
+    .post(Url::parse(&url)?)
     .send()
     .await
     .unwrap();
     println!("test lol xd");
     if cfg!(unix) {
-        let locker_pin = return_gpio_pin(&package.locker_id).unwrap();
+        let locker_pin = return_gpio_pin(&package.locker_id).await?;
         println!("raz dwa trzy");
         tokio::spawn(async move {
             println!("{}", locker_pin);
@@ -69,35 +67,34 @@ pub async fn create_package(package: Json<Package>) -> Result<String, String>{
             locker.on();
             loop {}
           });
-        return Ok(String::from("LED załączony"));
+        Ok(String::from("LED załączony"));
     }
     println!("o co chodzi");
     Ok(String::from("Wszystko poszło (w trybie windows)"))
 }
 
 
-fn return_gpio_pin(locker_id: &String) -> Result<u8> {
+async fn return_gpio_pin(locker_id: &String) -> Result<u8> {
     let query = format!("SELECT * FROM lockers WHERE lockerid LIKE '{locker_id}' LIMIT 1;");
     println!("{}", query);
-    let connection = sqlite::open("lockers.sqlite3")?;
-    let mut statement = connection.prepare(query)?;
-    println!("gpio: {}", statement.read::<i64, _>("gpio")?);
-    println!("gpio converted: {}", statement.read::<u8, _>("gpio")?);
-    return Ok(statement.read::<u8, _>("gpio")?);
+    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
+    let res = sqlx::query(&query).fetch_one(&connection).await?;
+    return Ok(res.get::<u8>("gpio")?);
 }
 
-fn locker_exists(locker_id: &String) -> bool {
+async fn locker_exists(locker_id: &String) -> bool {
+    
     let query = "SELECT * FROM lockers";
-    let connection = sqlite::open("lockers.sqlite3").unwrap();
-    let mut statement = connection.prepare(query).unwrap();
+    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await.unwrap();
+    let res = sqlx::query(&query).fetch_all(&connection).await.unwrap();
     let mut exists = false;
     
-    while let Ok(State::Row) = statement.next(){
-        if locker_id.clone() != statement.read::<String, _>("lockerid").unwrap() {
+    for (index, row) in res.iter().enumerate() {
+        if locker_id.clone() != row.get::<String>("lockerid").unwrap() {
             continue;
-        }else {
+        }else{
             exists = true;
-            break;    
+            break;
         }
     }
     exists
@@ -121,12 +118,11 @@ pub async fn create_locker(gpio: u16) -> Result<String> {
     //     gpio: gpio
     // };
 
-    let connection = sqlite::open("lockers.sqlite3")?;
-    let query = format!("
-        INSERT INTO lockers VALUES ('{locker_id}', {gpio})
-    ");
-    connection.execute(query)?;
-
+    // let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
+    let query = format!("INSERT INTO lockers VALUES ('{locker_id}', {gpio})");
+    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
+    let result = sqlx::query(query.as_str()).execute(&connection).await?;
+    println!("Created locker data");
 
     let response = client
         .post(Url::parse(&url)?)
@@ -206,16 +202,10 @@ fn port_is_available(port: u16) -> bool{
 }
 
 
-pub fn setup_db()  -> Result<String>{
+pub async fn setup_db()  -> Result<String>{
     File::create("lockers.sqlite3")?;
-    let connection = Connection::open("lockers.sqlite3")?;
-    let query = "
-    CREATE TABLE lockers (
-        lockerid VARCHAR(50) PRIMARY KEY,
-        gpio TINYINT
-    );
-    ";
-    connection.execute(query)?;
+    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
+    sqlx::migrate!("./migrations").run(&connection).await?;
     Ok(format!("Database ready !"))
 }
 
