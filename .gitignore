@@ -5,3 +5,4 @@ venv
 target
 Cargo.lock
 lockers.sqlite3
+lockers.sqlite

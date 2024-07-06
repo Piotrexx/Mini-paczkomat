@@ -1,7 +1,6 @@
 use std::vec;
-use lib::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Package};
+use lib::{create_locker, create_package, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Locker, Package};
 use rocket::{futures::lock, serde::json::Json};
-use sqlite::State;
 mod lib;
 #[macro_use] extern crate rocket;
 use tokio;
@@ -20,7 +19,7 @@ async fn check() -> () {
 
 #[post("/add_locker")]
 async fn add_locker() -> () {
-    let pins: Vec<u16> = vec![23, 27, 22];
+    let pins: Vec<i32> = vec![23, 27, 22];
     for pin in pins {
             create_locker(pin).await;
     }
@@ -28,16 +27,13 @@ async fn add_locker() -> () {
 
 #[get("/all_lockers")]
 fn all_lockers() {
-    let query = "SELECT * FROM lockers";
-    let connection = sqlite::open("lockers.sqlite3").unwrap();
-
-    let mut statement = connection.prepare(query).unwrap();
-    
-    while let Ok(State::Row) = statement.next() {
-        println!("lockerid = {}", statement.read::<String, _>("lockerid").unwrap());
-        println!("gpio = {}", statement.read::<u8, _>("gpio").unwrap());
+    use self::schema::lockers::dsl::*;
+    let connection = &mut establish_connection();
+    let results: Vec<Locker> = Locker::load(&connection);
+    for locker in results {
+        println!("{:?}", locker)
     }
-}
+}   
 
 #[get("/db_setup_test")]
 fn db_setup_test() -> String {

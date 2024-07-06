@@ -1,4 +1,3 @@
-use std::fs::File;
 use std::net::IpAddr;
 use local_ip_address::local_ip;
 use dotenv::dotenv;
@@ -10,13 +9,17 @@ use std::str::FromStr;
 use uuid::Uuid;
 use serde::{Serialize, Deserialize};
 use anyhow::Result;
+use diesel::sqlite::SqliteConnection;
+use diesel::prelude::*;
 use rust_gpiozero::*;
+pub mod schema;
 
-
-#[derive(Serialize)]
+#[derive(Serialize, Selectable, Queryable, Insertable)]
+#[diesel(table_name= crate::schema::lockers)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Locker {
-    locker_id: String,
-    gpio: u16
+    pub lockerid: String,
+    pub gpio: i32
 }
 
 #[derive(Deserialize)]
@@ -58,7 +61,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     .unwrap();
     println!("test lol xd");
     if cfg!(unix) {
-        let locker_pin = return_gpio_pin(&package.locker_id).await?;
+        let locker_pin = return_gpio_pin(&package.locker_id).await;
         println!("raz dwa trzy");
         tokio::spawn(async move {
             println!("{}", locker_pin);
@@ -74,33 +77,48 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 }
 
 
-async fn return_gpio_pin(locker_id: &String) -> Result<u8> {
-    let query = format!("SELECT * FROM lockers WHERE lockerid LIKE '{locker_id}' LIMIT 1;");
-    println!("{}", query);
-    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
-    let res = sqlx::query(&query).fetch_one(&connection).await?;
-    return Ok(res.get::<u8>("gpio")?);
+async fn return_gpio_pin(locker_id: &String) -> u8{
+    use self::schema::lockers::dsl::lockers;
+    let connection = &mut establish_connection();
+
+    let locker = lockers
+    .find(locker_id)
+    .select(Locker::as_select())
+    .first(connection)
+    .optional();
+
+    match locker {
+        Ok(Some(locker)) => {
+            u8::try_from(locker.gpio).unwrap()
+        },
+        Ok(None) => panic!("Nie znaleziono takiej szafki"),
+        Err(err) => panic!("ERROR: {}", err)
+    }
+
 }
 
+
 async fn locker_exists(locker_id: &String) -> bool {
-    
-    let query = "SELECT * FROM lockers";
-    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await.unwrap();
-    let res = sqlx::query(&query).fetch_all(&connection).await.unwrap();
-    let mut exists = false;
-    
-    for (index, row) in res.iter().enumerate() {
-        if locker_id.clone() != row.get::<String>("lockerid").unwrap() {
-            continue;
-        }else{
-            exists = true;
-            break;
-        }
+    use self::schema::lockers::dsl::lockers;
+    let connection = &mut establish_connection();
+
+    let locker = lockers
+    .find(locker_id)
+    .select(Locker::as_select())
+    .first(connection)
+    .optional();
+
+    match locker {
+        Ok(Some(locker)) => {
+            println!("Locker id: {}, GPIO: {}", locker.lockerid, locker.gpio);
+            true
+    },
+        Ok(None) => false,
+        Err(_) => false
     }
-    exists
 }
     
-pub async fn create_locker(gpio: u16) -> Result<String> {
+pub async fn create_locker(gpio: i32) -> Result<String> {
     dotenv().ok();
     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
@@ -119,10 +137,21 @@ pub async fn create_locker(gpio: u16) -> Result<String> {
     // };
 
     // let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
-    let query = format!("INSERT INTO lockers VALUES ('{locker_id}', {gpio})");
-    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
-    let result = sqlx::query(query.as_str()).execute(&connection).await?;
-    println!("Created locker data");
+
+    use crate::schema::lockers;
+
+    let connection = &mut establish_connection();
+
+    let new_locker = Locker {
+        lockerid: locker_id, 
+        gpio: gpio
+    };
+
+    diesel::insert_into(lockers::table)
+    .values(&new_locker)
+    .returning(Locker::as_returning())
+    .get_result(connection)
+    .expect("Zapis nie udany");
 
     let response = client
         .post(Url::parse(&url)?)
@@ -202,10 +231,19 @@ fn port_is_available(port: u16) -> bool{
 }
 
 
-pub async fn setup_db()  -> Result<String>{
-    File::create("lockers.sqlite3")?;
-    let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
-    sqlx::migrate!("./migrations").run(&connection).await?;
-    Ok(format!("Database ready !"))
-}
+// pub async fn setup_db()  -> Result<String>{
+//     File::create("lockers.sqlite3")?;
+//     let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
+//     sqlx::migrate!("./migrations").run(&connection).await?;
+//     Ok(format!("Database ready !"))
+// }
 
+
+
+pub fn establish_connection() -> SqliteConnection {
+    dotenv().ok();
+
+    let database_url = std::env::var("DATABASE_URL").expect("Nie znaleziono url bazydanych w pliku .env");
+
+    SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
+}
