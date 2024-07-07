@@ -70,10 +70,10 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
             locker.on();
             loop {}
           });
-        Ok(String::from("LED załączony"));
+        return Ok(String::from("LED załączony"));
     }
     println!("o co chodzi");
-    Ok(String::from("Wszystko poszło (w trybie windows)"))
+    return Ok(String::from("Wszystko poszło (w trybie windows)"))
 }
 
 
