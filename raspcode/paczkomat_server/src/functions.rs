@@ -236,7 +236,8 @@ fn port_is_available(port: u16) -> bool{
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
-    let database_url = std::env::var("DATABASE_URL").expect("Nie znaleziono url bazydanych w pliku .env");
+    // let database_url = std::env::var("DATABASE_URL").expect("Nie znaleziono url bazydanych w pliku .env");
+    let database_url = String::from("sqlite:///lockers.sqlite");
 
     SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
 }
