@@ -1,8 +1,8 @@
 pub mod schema;
 pub mod models;
 use std::vec;
-use functions::{create_locker, create_package, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Locker, Package};
-use rocket::{futures::lock, serde::json::Json};
+use functions::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
+use rocket::serde::json::Json;
 mod functions;
 #[macro_use] extern crate rocket;
 use tokio;
@@ -29,18 +29,21 @@ async fn add_locker() -> () {
 
 #[get("/all_lockers")]
 fn all_lockers() {
-    use self::schema::lockers::dsl::*;
-    let connection = &mut establish_connection();
-    let results: Vec<Locker> = Locker::load(&connection);
-    for locker in results {
-        println!("{:?}", locker)
-    }
+    // use self::schema::lockers::dsl::*;
+    // let connection = &mut establish_connection();
+    // let results: Vec<Locker> = Locker::load(&connection);
+    // let results = lockers.select(Locker::as_select()).load(connection);
+    // let results = lockers::table.load::<Locker>(&connection);
+    // let results = lockers.select(Locker::as_select()).;
+    // for locker in results {
+    //     println!("{:?}", locker)
+    // }
 }   
 
-#[get("/db_setup_test")]
-fn db_setup_test() -> String {
-    setup_db().unwrap()
-}
+// #[get("/db_setup_test")]
+// fn db_setup_test() -> String {
+//     setup_db().unwrap()
+// }
 
 // dokończyć !!!
 #[post("/add_package", format="json", data="<package>")]
@@ -77,6 +80,6 @@ fn rocket() -> _ {
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![hello, check, add_locker, add_package, db_setup_test, all_lockers, led_test])
+    .mount("/", routes![hello, check, add_locker, add_package, all_lockers, led_test])
 }
 
