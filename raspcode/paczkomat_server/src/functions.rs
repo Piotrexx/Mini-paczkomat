@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 use local_ip_address::local_ip;
 use dotenv::dotenv;
+use crate::models::Locker;
 use reqwest::{Client, Url};
 use rocket::serde::json::Json;
 use serde_json::json;
@@ -11,16 +12,8 @@ use serde::{Serialize, Deserialize};
 use anyhow::Result;
 use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
-use rust_gpiozero::*;
-pub mod schema;
+// use rust_gpiozero::*;
 
-#[derive(Serialize, Selectable, Queryable, Insertable)]
-#[diesel(table_name= crate::schema::lockers)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
-pub struct Locker {
-    pub lockerid: String,
-    pub gpio: i32
-}
 
 #[derive(Deserialize)]
 pub struct Package {
@@ -65,9 +58,9 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         println!("raz dwa trzy");
         tokio::spawn(async move {
             println!("{}", locker_pin);
-            let mut locker = LED::new(locker_pin);
+            // let mut locker = LED::new(locker_pin);
             println!("test1234242");
-            locker.on();
+            // locker.on();
             loop {}
           });
         return Ok(String::from("LED załączony"));
@@ -78,7 +71,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 
 
 async fn return_gpio_pin(locker_id: &String) -> u8{
-    use self::schema::lockers::dsl::lockers;
+    use crate::schema::lockers::dsl::lockers;
     let connection = &mut establish_connection();
 
     let locker = lockers
@@ -99,7 +92,7 @@ async fn return_gpio_pin(locker_id: &String) -> u8{
 
 
 async fn locker_exists(locker_id: &String) -> bool {
-    use self::schema::lockers::dsl::lockers;
+    use crate::schema::lockers::dsl::lockers;
     let connection = &mut establish_connection();
 
     let locker = lockers

@@ -1,7 +1,9 @@
+pub mod schema;
+pub mod models;
 use std::vec;
-use lib::{create_locker, create_package, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Locker, Package};
+use functions::{create_locker, create_package, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, setup_db, Locker, Package};
 use rocket::{futures::lock, serde::json::Json};
-mod lib;
+mod functions;
 #[macro_use] extern crate rocket;
 use tokio;
 
