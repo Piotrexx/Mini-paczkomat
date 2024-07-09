@@ -12,7 +12,7 @@ use serde::{Serialize, Deserialize};
 use anyhow::Result;
 use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
-// use rust_gpiozero::*;
+use rust_gpiozero::*;
 
 
 #[derive(Deserialize)]
