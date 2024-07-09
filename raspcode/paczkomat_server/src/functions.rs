@@ -237,7 +237,7 @@ pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
     // let database_url = std::env::var("DATABASE_URL").expect("Nie znaleziono url bazydanych w pliku .env");
-    let database_url = String::from("sqlite:///lockers.sqlite");
+    let database_url = String::from("lockers.sqlite");
 
     SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
 }
