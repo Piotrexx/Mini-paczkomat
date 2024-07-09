@@ -232,7 +232,7 @@ fn port_is_available(port: u16) -> bool{
 // }
 
 
-
+// DOKOŃCZYĆ, NIE MOŻNA SIĘ POŁĄCZYĆ Z BAZĄ DANYCH
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
