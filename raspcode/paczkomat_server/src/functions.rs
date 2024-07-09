@@ -58,9 +58,9 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         println!("raz dwa trzy");
         tokio::spawn(async move {
             println!("{}", locker_pin);
-            // let mut locker = LED::new(locker_pin);
+            let mut locker = LED::new(locker_pin);
             println!("test1234242");
-            // locker.on();
+            locker.on();
             loop {}
           });
         return Ok(String::from("LED załączony"));

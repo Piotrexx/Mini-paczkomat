@@ -1,7 +1,8 @@
 pub mod schema;
 pub mod models;
 use std::vec;
-use functions::{create_locker, create_package, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
+use functions::{create_locker, create_package, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
+use models::Locker;
 use rocket::serde::json::Json;
 mod functions;
 #[macro_use] extern crate rocket;
@@ -66,7 +67,6 @@ fn led_test() {
     tokio::spawn(async move {
         locker.on();
         loop {
-            // Do nothing here (or add minimal logic)
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
         }
     });
