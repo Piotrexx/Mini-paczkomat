@@ -44,4 +44,25 @@ mod test {
         assert_eq!(4,4)
     }
 
+
+    #[test]
+    fn variable_gpio_activity() {
+        use rust_gpiozero::*;
+        use std::thread::sleep;
+        use std::time::Duration;
+        tokio::spawn(async move {
+            let mut led = LED::new(27);
+            led.on();
+            loop {
+                
+            }
+          });
+        let led = LED::new(23);
+        led.on();
+        sleep(Duration::from_secs(10));
+        led.off();
+    }
+
+
+
 }
