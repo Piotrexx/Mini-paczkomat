@@ -32,19 +32,17 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 
 
 
-// dokończyć !!!
 pub async fn create_package(package: Json<Package>) -> Result<String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
         return Ok(String::from("Error: 400"));
     }
-    // dokończyć  załącznie diody !!!
+
     let exists = locker_exists(&package.locker_id).await;
     if exists == false {
         return Ok(String::from("Error, przesłane ID skrzynki nie istnieje"))
     }
-    println!("before sending");
     let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), &package.locker_id);
     let client = Client::new();
     let response = client
@@ -52,21 +50,28 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     .send()
     .await
     .unwrap();
-    println!("test lol xd");
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
-        println!("raz dwa trzy");
         tokio::spawn(async move {
-            println!("{}", locker_pin);
             let mut locker = LED::new(locker_pin);
-            println!("test1234242");
             locker.on();
-            loop {}
+            loop {
+                
+            }
           });
         return Ok(String::from("LED załączony"));
     }
-    println!("o co chodzi");
     return Ok(String::from("Wszystko poszło (w trybie windows)"))
+}
+
+
+
+// DOKOŃCZYĆ (POMYŚLEĆ NAD STRUKTURĄ MODELU PACZKI)
+pub fn empty_locker(codes: Json<Package>) -> Result<String> {
+    dotenv().ok();
+
+    Ok(String::from("DEV"))
+
 }
 
 

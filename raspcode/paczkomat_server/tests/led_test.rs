@@ -27,4 +27,21 @@ mod test {
         assert_eq!(4,4)
     }
 
+    #[test]
+    fn test_gpio_activity() {
+        use rust_gpiozero::*;
+        use std::thread::sleep;
+        use std::time::Duration;
+        let mut led = LED::new(27);
+        led.on();
+        sleep(Duration::from_secs(10));
+        led.off();
+
+        let mut led_test = LED::new(27);
+        led.on();
+        sleep(Duration::from_secs(10));
+        led.off();
+        assert_eq!(4,4)
+    }
+
 }

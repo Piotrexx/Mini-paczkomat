@@ -57,7 +57,7 @@ class Locker(models.Model):
     empty = models.BooleanField(default=True)
     paczkomat = models.ForeignKey(Paczkomat, on_delete=models.CASCADE)
 
-
+# POMYŚLEĆ NAD STRUKTURĄ MODELU PACZKI (czy dodawać kod czy nie (i jaki))
 class Package(models.Model):
     # package_code = models.UUIDField(primary_key=True, editable=False)
     package_name = models.CharField(max_length=100)
