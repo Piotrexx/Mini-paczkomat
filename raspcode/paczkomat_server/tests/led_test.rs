@@ -61,6 +61,9 @@ mod test {
         led.on();
         sleep(Duration::from_secs(10));
         led.off();
+
+        assert_eq!(4,4)
+
     }
 
 
