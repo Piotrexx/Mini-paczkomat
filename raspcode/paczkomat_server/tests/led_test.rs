@@ -66,6 +66,19 @@ mod test {
 
     }
 
+    #[test]
+    fn rppal_test() {
+        use rppal::gpio::Gpio;
+        use std::thread::sleep;
+        use std::time::Duration;
+        let gpio = Gpio::new()?;
+        let mut pin = gpio.get(23)?.into_output();
+        pin.set_high();
+        sleep(Duration::from_secs(10));
+        pin.set_low();
+        assert_eq!(4,4)
+    }
+
 
 
 }
