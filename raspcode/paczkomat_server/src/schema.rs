@@ -4,5 +4,6 @@ diesel::table! {
     lockers (lockerid) {
         lockerid -> Text,
         gpio -> Integer,
+        is_empty -> Bool,
     }
 }

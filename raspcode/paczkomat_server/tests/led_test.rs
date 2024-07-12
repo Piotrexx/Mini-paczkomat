@@ -67,18 +67,22 @@ mod test {
     }
 
     #[test]
-    fn rppal_test() {
-        use rppal::gpio::Gpio;
-        // use std::thread::sleep;
-        // use std::time::Duration;
-        let gpio = Gpio::new().unwrap();
-        let mut pin = gpio.get(23).unwrap().into_output();
-        pin.set_high();
-        // sleep(Duration::from_secs(10));
-        // pin.set_low();
-        assert_eq!(4,4)
-    }
+    fn loop_test() {
+        use rust_gpiozero::*;
+        let number = 10;
+        let led = LED::new();
+        loop {
+            if number == 10 {
+                number = number - 1;
+                led.on();
+                loop {
+                    
+                }
+            }    
+            assert_eq!(4,4);        
+        }
 
+    }
 
 
 }

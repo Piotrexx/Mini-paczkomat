@@ -30,4 +30,3 @@ features = ["json"]
 
 [target.'cfg(unix)'.dependencies]
 rust_gpiozero = "0.2.1"
-rppal = "0.18.0"

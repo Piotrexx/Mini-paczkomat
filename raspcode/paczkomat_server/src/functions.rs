@@ -53,7 +53,27 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
         tokio::spawn(async move {
+            // TRZEBA JAKOŚ ZAPROJEKTOWAĆ SIGNAL
+            use crate::schema::lockers::dsl::lockers;
+            let connection = &mut establish_connection();
+        
+            let locker = lockers
+            .find(&package.locker_id)
+            .select(Locker::as_select())
+            .first(connection)
+            .optional();
+        
+            match locker {
+                Ok(Some(locker)) => {
+                    u8::try_from(locker.gpio).unwrap()
+                },
+                Ok(None) => panic!("Nie znaleziono takiej szafki"),
+                Err(err) => panic!("ERROR: {}", err)
+            }
             let mut locker = LED::new(locker_pin);
+            loop {
+                
+            }
             locker.on();
             loop {
                 
@@ -142,7 +162,8 @@ pub async fn create_locker(gpio: i32) -> Result<String> {
 
     let new_locker = Locker {
         lockerid: locker_id, 
-        gpio: gpio
+        gpio: gpio,
+        is_empty: true
     };
 
     diesel::insert_into(lockers::table).values(&new_locker).execute(connection)?;

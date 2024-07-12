@@ -59,27 +59,12 @@ async fn add_package(package: Json<Package>) -> String{
     }
 }
 
-
-#[get("/led_on")]
-fn led_test() {
-    use rust_gpiozero::*;
-    let mut locker = LED::new(4);
-    tokio::spawn(async move {
-        locker.on();
-        loop {
-            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-        }
-    });
-}
-
-
-
 #[launch]
 fn rocket() -> _ {
     rocket::build()
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![hello, check, add_locker, add_package, all_lockers, led_test])
+    .mount("/", routes![hello, check, add_locker, add_package, all_lockers])
 }
 
