@@ -69,20 +69,24 @@ mod test {
     #[test]
     fn loop_test() {
         use rust_gpiozero::*;
-        let mut number = 10;
+        use std::thread::sleep;
+        use std::time::Duration;
+        let mut  number = 10;
         let led = LED::new(27);
+        number = number - 1;
+        
+        led.on();
         loop {
-            if number == 10 {
-                number = number - 1;
-                led.on();
-                loop {
-                    
-                }
-            }    
+            number = number - 1;
+            sleep(Duration::from_secs(10));
+            if number == 5 { 
+                led.off();
+                break;   
+        }            
+    }    
             assert_eq!(4,4);        
-        }
-
     }
 
-
 }
+
+
