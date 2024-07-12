@@ -54,30 +54,30 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         let locker_pin = return_gpio_pin(&package.locker_id).await;
         tokio::spawn(async move {
             // TRZEBA JAKOŚ ZAPROJEKTOWAĆ SIGNAL
-            use crate::schema::lockers::dsl::lockers;
-            let connection = &mut establish_connection();
+            // use crate::schema::lockers::dsl::lockers;
+            // let connection = &mut establish_connection();
         
-            let locker = lockers
-            .find(&package.locker_id)
-            .select(Locker::as_select())
-            .first(connection)
-            .optional();
+            // let locker = lockers
+            // .find(&package.locker_id)
+            // .select(Locker::as_select())
+            // .first(connection)
+            // .optional();
         
-            match locker {
-                Ok(Some(locker)) => {
-                    u8::try_from(locker.gpio).unwrap()
-                },
-                Ok(None) => panic!("Nie znaleziono takiej szafki"),
-                Err(err) => panic!("ERROR: {}", err)
-            }
-            let mut locker = LED::new(locker_pin);
-            loop {
+            // match locker {
+            //     Ok(Some(locker)) => {
+            //         u8::try_from(locker.gpio).unwrap()
+            //     },
+            //     Ok(None) => panic!("Nie znaleziono takiej szafki"),
+            //     Err(err) => panic!("ERROR: {}", err)
+            // }
+            // let mut locker = LED::new(locker_pin);
+            // loop {
                 
-            }
-            locker.on();
-            loop {
+            // }
+            // locker.on();
+            // loop {
                 
-            }
+            // }
           });
         return Ok(String::from("LED załączony"));
     }

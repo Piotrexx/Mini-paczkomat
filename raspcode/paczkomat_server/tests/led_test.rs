@@ -69,7 +69,7 @@ mod test {
     #[test]
     fn loop_test() {
         use rust_gpiozero::*;
-        let number = 10;
+        let mut number = 10;
         let led = LED::new(27);
         loop {
             if number == 10 {
