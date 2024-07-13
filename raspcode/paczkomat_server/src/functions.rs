@@ -8,17 +8,98 @@ use serde_json::json;
 use std::net::TcpListener;
 use std::str::FromStr;
 use uuid::Uuid;
-use serde::{Serialize, Deserialize};
+use serde::Deserialize;
 use anyhow::Result;
 use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
 use rust_gpiozero::*;
-
+use tokio::sync::{oneshot, mpsc};
+// use lazy_static::lazy_static;
+use std::collections::HashMap;
 
 #[derive(Deserialize)]
 pub struct Package {
     pub locker_id: String,
     pub paczkomat_id: String
+}
+
+
+struct Actor {
+    receiver: mpsc::Receiver<ActorMessage>,
+    // empty: bool,
+    // locker_id: String
+    locker_data: HashMap<String, bool>
+}
+
+enum ActorMessage {
+    CheckIfEmpty {
+        respond_to: oneshot::Sender<HashMap<String, bool>>
+    }
+}
+
+impl Actor {
+    fn new(receiver: mpsc::Receiver<ActorMessage>, locker_id: String) -> Self {
+        let mut m: HashMap<String, bool> = HashMap::new();
+        m.insert(locker_id, false);
+        Actor{
+            receiver,
+            // empty: false,
+            // locker_id
+            locker_data: m
+        }
+    }
+
+    fn handle_message(&mut self, msg: ActorMessage, locker_id: String) {
+        match msg {
+            ActorMessage::CheckIfEmpty { respond_to } => {
+                let cloned_id = locker_id.clone();
+                *self.locker_data.entry(locker_id).or_insert(false) = true;
+                let empty = *self.locker_data.get(&cloned_id).unwrap();
+                let mut m = HashMap::new();
+                m.insert(cloned_id, empty);
+                let _ = respond_to.send(m);
+            }
+        }
+    }
+}
+
+
+// lazy_static! {
+//     static ref ARRAY_OF_EMPTYNESS: HashMap<String, bool> = {
+//         let mut m = HashMap::new();
+//         m
+//     };
+// }
+
+async fn run_actor(mut actor: Actor) {
+    
+    while let Some(msg) = actor.receiver.recv().await {
+        actor.handle_message(msg, actor.locker_data.keys().into_iter().next().unwrap().clone())
+    }
+}
+
+
+#[derive(Clone)]
+struct ActorHandle{
+    sender: mpsc::Sender<ActorMessage>
+}
+
+impl ActorHandle {
+    fn new(locker_id: String) -> Self {
+        let (sender, receiver) = mpsc::channel(8);
+        let actor = Actor::new(receiver, locker_id);
+        tokio::spawn(run_actor(actor));
+
+        Self{sender}
+    }
+
+    async fn check_if_empty(&self) -> HashMap<String, bool> {
+        let (send, recv) = oneshot::channel();
+        let msg = ActorMessage::CheckIfEmpty { respond_to: send };
+        let _ = self.sender.send(msg).await;
+        recv.await.expect("Actor killed")
+    }
+
 }
 
 
@@ -53,31 +134,14 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
         tokio::spawn(async move {
-            // TRZEBA JAKOŚ ZAPROJEKTOWAĆ SIGNAL
-            // use crate::schema::lockers::dsl::lockers;
-            // let connection = &mut establish_connection();
-        
-            // let locker = lockers
-            // .find(&package.locker_id)
-            // .select(Locker::as_select())
-            // .first(connection)
-            // .optional();
-        
-            // match locker {
-            //     Ok(Some(locker)) => {
-            //         u8::try_from(locker.gpio).unwrap()
-            //     },
-            //     Ok(None) => panic!("Nie znaleziono takiej szafki"),
-            //     Err(err) => panic!("ERROR: {}", err)
-            // }
-            // let mut locker = LED::new(locker_pin);
-            // loop {
-                
-            // }
-            // locker.on();
-            // loop {
-                
-            // }
+            let mut locker = LED::new(locker_pin);
+            locker.on();
+            let id = package.locker_id.clone();
+            loop {
+                if *ActorHandle::new(id).check_if_empty().await.get(&id).unwrap(){
+                    locker.off()
+                }
+            }
           });
         return Ok(String::from("LED załączony"));
     }
@@ -86,9 +150,17 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 
 
 
-// DOKOŃCZYĆ (POMYŚLEĆ NAD STRUKTURĄ MODELU PACZKI)
-pub fn empty_locker(codes: Json<Package>) -> Result<String> {
+pub fn empty_locker(data: Json<Package>) -> Result<String> {
     dotenv().ok();
+    use crate::schema::lockers;
+    let connection = &mut establish_connection();
+
+    diesel::update(lockers::table)
+    .filter(lockers::lockerid.eq(&data.locker_id))
+    .set(lockers::is_empty.eq(true))
+    .execute(connection)?;
+
+    ActorHandle::new(data.locker_id.clone());
 
     Ok(String::from("DEV"))
 
@@ -147,14 +219,6 @@ pub async fn create_locker(gpio: i32) -> Result<String> {
         "locker_id": locker_id,
         "gpio": gpio,
     });
-
-
-    // let data_to_save = Locker {
-    //     locker_id: locker_id.to_string(),
-    //     gpio: gpio
-    // };
-
-    // let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
 
     use crate::schema::lockers;
 
@@ -257,11 +321,9 @@ fn port_is_available(port: u16) -> bool{
 // }
 
 
-// DOKOŃCZYĆ, NIE MOŻNA SIĘ POŁĄCZYĆ Z BAZĄ DANYCH
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
 
-    // let database_url = std::env::var("DATABASE_URL").expect("Nie znaleziono url bazydanych w pliku .env");
     let database_url = String::from("lockers.sqlite");
 
     SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
