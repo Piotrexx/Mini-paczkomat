@@ -124,6 +124,15 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     if exists == false {
         return Ok(String::from("Error, przesłane ID skrzynki nie istnieje"))
     }
+
+    use crate::schema::lockers;
+    let connection = &mut establish_connection();
+
+    diesel::update(lockers::table)
+    .filter(lockers::lockerid.eq(&package.locker_id))
+    .set(lockers::is_empty.eq(false))
+    .execute(connection)?;
+
     let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), &package.locker_id);
     let client = Client::new();
     let response = client
@@ -138,8 +147,9 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
             locker.on();
             let id = package.locker_id.clone();
             loop {
-                if *ActorHandle::new(id).check_if_empty().await.get(&id).unwrap(){
-                    locker.off()
+                if  *ActorHandle::new(id).check_if_empty().await.get(&id).unwrap(){
+                    locker.off();
+                    break;
                 }
             }
           });
