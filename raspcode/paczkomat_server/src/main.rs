@@ -1,7 +1,7 @@
 pub mod schema;
 pub mod models;
 use std::vec;
-use functions::{create_locker, create_package, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, Package};
+use functions::{create_locker, create_package,empty_locker, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, Package, CollectPackageStruct};
 use models::Locker;
 use rocket::serde::json::Json;
 mod functions;
@@ -59,12 +59,18 @@ async fn add_package(package: Json<Package>) -> String{
     }
 }
 
+#[patch("/collect_package", format="json", data="<data>")]
+async fn collect_package(data: Json<CollectPackageStruct>) -> String{
+    empty_locker(data).unwrap()
+}
+
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![hello, check, add_locker, add_package, all_lockers])
+    .mount("/", routes![hello, check, add_locker, add_package, all_lockers, collect_package])
 }
 

@@ -23,6 +23,11 @@ pub struct Package {
     pub paczkomat_id: String
 }
 
+#[derive(Deserialize)]
+pub struct CollectPackageStruct {
+    pub locker_id: String,
+}
+
 
 struct Actor {
     receiver: mpsc::Receiver<ActorMessage>,
@@ -133,21 +138,13 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     .set(lockers::is_empty.eq(false))
     .execute(connection)?;
 
-    let url = format!("{}/locker/{}/change_emptyness/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), &package.locker_id);
-    let client = Client::new();
-    let response = client
-    .post(Url::parse(&url)?)
-    .send()
-    .await
-    .unwrap();
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
         tokio::spawn(async move {
             let mut locker = LED::new(locker_pin);
             locker.on();
-            
             loop {
-                if  *ActorHandle::new(&package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){
+                if *ActorHandle::new(&package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){ // DOKOŃCZYĆ !!!!!
                     locker.off();
                     break;
                 }
@@ -160,7 +157,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 
 
 
-pub fn empty_locker(data: Json<Package>) -> Result<String> {
+pub fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     dotenv().ok();
     use crate::schema::lockers;
     let connection = &mut establish_connection();
@@ -173,7 +170,6 @@ pub fn empty_locker(data: Json<Package>) -> Result<String> {
     ActorHandle::new(&data.locker_id);
 
     Ok(String::from("DEV"))
-
 }
 
 
@@ -289,24 +285,6 @@ pub async fn ping_or_create() {
     
 }
 
-
-// fn get_avaible_pin(pin_set: HashMap<&str, i32>) -> i32 {
-//     for (key, pin) in pin_set.into_iter() {
-//         if pin_avaible(pin) {
-//             pin
-//         }
-//         continue;
-//     }
-// }
-
-// fn pin_avaible(pin: i32) -> bool{
-//     let pin = LED::new(pin);
-//     if(pin.is_active()) {
-//         true
-//     }
-//     false
-// }
-
 pub fn get_avaible_port() -> Option<u16> {
     (8001..9000).find(|port| port_is_available(*port))
 }
@@ -321,14 +299,6 @@ fn port_is_available(port: u16) -> bool{
         Err(_) => false
     }
 }
-
-
-// pub async fn setup_db()  -> Result<String>{
-//     File::create("lockers.sqlite3")?;
-//     let connection = sqlx::sqlite::SqlitePool::connect("lockers.sqlite3").await?;
-//     sqlx::migrate!("./migrations").run(&connection).await?;
-//     Ok(format!("Database ready !"))
-// }
 
 
 pub fn establish_connection() -> SqliteConnection {

@@ -70,13 +70,6 @@ class PackageViewSet(GenericViewSet):
         locker.empty = False
         locker.save()
         return Response(f"Nadano przesyłkę do skrytki: {locker.locker_id}", status=HTTP_201_CREATED)
-    
-    # @action(detail=True, methods=['put'])
-    # def change_emptyness(self, request, uuid):
-    #     locker = get_object_or_404(Locker, locker_id=uuid)
-    #     locker.empty = False
-    #     locker.save()
-    #     return Response("Zapisano", status=HTTP_200_OK)
 
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
@@ -97,7 +90,12 @@ class PackageViewSet(GenericViewSet):
 
         locker = Locker.objects.get(id=package.locker)
         paczkomat = Paczkomat.objects.get(id=locker.paczkomat)
-        requests.patch(url=f"{paczkomat.ip_address}:{paczkomat.port}/collect/", data={"id": paczkomat.id, "gpio": locker.locker_id}) # dokończyć
+        requests.patch(url=f"{paczkomat.ip_address}:{paczkomat.port}/collect_package/", data={"locker_id": str(locker.locker_id)})
+
+        locker.empty = True
+        locker.save()
+
+        return Response("Paczka odebrana", status=HTTP_200_OK)
 
 
 class PaczkomatViewSet(GenericViewSet):
