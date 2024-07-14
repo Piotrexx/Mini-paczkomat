@@ -90,7 +90,7 @@ class PackageViewSet(GenericViewSet):
         locker = Locker.objects.get(locker_id=package[0].locker_id)
         print(locker.paczkomat)
         paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)
-        response = requests.patch(url=f"{paczkomat.ip_address}:{paczkomat.port}/collect_package", data=json.dumps({"locker_id": str(locker.locker_id)}))
+        response = requests.patch(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/collect_package", data=json.dumps({"locker_id": str(locker.locker_id)}), headers= {"Content-Type": "application/json"})
         print(response.content)
         locker.empty = True
         locker.save()

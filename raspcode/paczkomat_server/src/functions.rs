@@ -144,11 +144,14 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
             let mut locker = LED::new(locker_pin);
             locker.on();
             loop {
+                println!("OUTSITE OF IF");
                 if *ActorHandle::new(&package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){ // DOKOŃCZYĆ !!!!!
+                    println!("IN IF");
                     locker.off();
                     break;
                 }
             }
+            println!("bro how")
           });
         return Ok(String::from("LED załączony"));
     }
