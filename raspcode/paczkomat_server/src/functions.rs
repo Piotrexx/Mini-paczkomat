@@ -145,9 +145,9 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         tokio::spawn(async move {
             let mut locker = LED::new(locker_pin);
             locker.on();
-            let id = package.locker_id.clone();
+            
             loop {
-                if  *ActorHandle::new(id).check_if_empty().await.get(&id).unwrap(){
+                if  *ActorHandle::new(package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){
                     locker.off();
                     break;
                 }
