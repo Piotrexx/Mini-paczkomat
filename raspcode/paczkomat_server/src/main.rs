@@ -1,6 +1,7 @@
 pub mod schema;
 pub mod models;
 use std::vec;
+use diesel::RunQueryDsl;
 use functions::{create_locker, create_package,empty_locker, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, Package, CollectPackageStruct};
 use models::Locker;
 use rocket::serde::json::Json;
@@ -30,23 +31,15 @@ async fn add_locker() -> () {
 
 #[get("/all_lockers")]
 fn all_lockers() {
-    // use self::schema::lockers::dsl::*;
-    // let connection = &mut establish_connection();
-    // let results: Vec<Locker> = Locker::load(&connection);
-    // let results = lockers.select(Locker::as_select()).load(connection);
-    // let results = lockers::table.load::<Locker>(&connection);
-    // let results = lockers.select(Locker::as_select()).;
-    // for locker in results {
-    //     println!("{:?}", locker)
-    // }
-}   
+    use crate::schema::lockers::dsl::*;
+    let mut connection = establish_connection();
+    let lockers_query = lockers.load::<Locker>(&mut connection);
 
-// #[get("/db_setup_test")]
-// fn db_setup_test() -> String {
-//     setup_db().unwrap()
-// }
+    for locker in lockers_query.unwrap() {
+        println!("locker id: {}", locker.lockerid)
+    }
+}  
 
-// dokończyć !!!
 #[post("/add_package", format="json", data="<package>")]
 async fn add_package(package: Json<Package>) -> String{
     // format!("Code Returned: {}", create_package(package).await.unwrap())

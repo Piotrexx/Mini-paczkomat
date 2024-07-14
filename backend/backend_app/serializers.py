@@ -19,8 +19,8 @@ class LockerSerializer(ModelSerializer):
 class PackageSerializer(ModelSerializer):
     class Meta:
         model = Package
-        fields = ("package_name", "receiver")
-        read_only_fields = ("package_code", "date_addressed","locker")
+        fields = ("package_name", "receiver","locker", "date_addressed")
+        read_only_fields = ("date_addressed","locker") # "package_code",
 
 
 class PaczkomatSerializer(ModelSerializer):
