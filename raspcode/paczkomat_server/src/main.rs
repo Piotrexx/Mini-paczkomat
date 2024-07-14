@@ -36,7 +36,7 @@ fn all_lockers() {
     let lockers_query = lockers.load::<Locker>(&mut connection);
 
     for locker in lockers_query.unwrap() {
-        println!("locker id: {}", locker.lockerid)
+        println!("locker id: {}, is empty: {}", locker.lockerid, locker.is_empty)
     }
 }  
 
