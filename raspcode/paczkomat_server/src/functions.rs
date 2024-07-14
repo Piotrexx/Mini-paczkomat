@@ -38,9 +38,9 @@ enum ActorMessage {
 }
 
 impl Actor {
-    fn new(receiver: mpsc::Receiver<ActorMessage>, locker_id: String) -> Self {
+    fn new(receiver: mpsc::Receiver<ActorMessage>, locker_id: &String) -> Self {
         let mut m: HashMap<String, bool> = HashMap::new();
-        m.insert(locker_id, false);
+        m.insert(locker_id.clone(), false);
         Actor{
             receiver,
             // empty: false,
@@ -85,7 +85,7 @@ struct ActorHandle{
 }
 
 impl ActorHandle {
-    fn new(locker_id: String) -> Self {
+    fn new(locker_id: &String) -> Self {
         let (sender, receiver) = mpsc::channel(8);
         let actor = Actor::new(receiver, locker_id);
         tokio::spawn(run_actor(actor));
@@ -147,7 +147,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
             locker.on();
             
             loop {
-                if  *ActorHandle::new(package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){
+                if  *ActorHandle::new(&package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){
                     locker.off();
                     break;
                 }
@@ -170,7 +170,7 @@ pub fn empty_locker(data: Json<Package>) -> Result<String> {
     .set(lockers::is_empty.eq(true))
     .execute(connection)?;
 
-    ActorHandle::new(data.locker_id.clone());
+    ActorHandle::new(&data.locker_id);
 
     Ok(String::from("DEV"))
 
