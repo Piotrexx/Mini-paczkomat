@@ -140,7 +140,7 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 
 
 
-pub async fn create_package(package: Json<Package>, handle: mpsc::Sender<ActorMessage>) -> Result<String>{
+pub async fn create_package(package: Json<Package>) -> Result<String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
