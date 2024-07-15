@@ -29,6 +29,15 @@ pub struct CollectPackageStruct {
 }
 
 
+
+enum ActorMessage {
+    TurnOn,
+    ChangeToFalse,
+    CheckIfEmpty(oneshot::Sender<HashMap<String, bool>>)
+}
+
+
+
 struct Actor {
     receiver: mpsc::Receiver<ActorMessage>,
     // empty: bool,
@@ -36,11 +45,7 @@ struct Actor {
     locker_data: HashMap<String, bool>
 }
 
-enum ActorMessage {
-    CheckIfEmpty {
-        respond_to: oneshot::Sender<HashMap<String, bool>>
-    }
-}
+
 
 impl Actor {
     fn new(receiver: mpsc::Receiver<ActorMessage>, locker_id: &String) -> Self {
@@ -48,25 +53,42 @@ impl Actor {
         m.insert(locker_id.clone(), false);
         Actor{
             receiver,
-            // empty: false,
-            // locker_id
             locker_data: m
         }
     }
 
-    fn handle_message(&mut self, msg: ActorMessage, locker_id: String) {
-        match msg {
-            ActorMessage::CheckIfEmpty { respond_to } => {
-                let cloned_id = locker_id.clone();
-                *self.locker_data.entry(locker_id).or_insert(false) = true;
-                let empty = *self.locker_data.get(&cloned_id).unwrap();
-                let mut m = HashMap::new();
-                m.insert(cloned_id, empty);
-                let _ = respond_to.send(m);
+    async fn run(&mut self, locker_id: String) -> bool{ // msg: ActorMessage, locker_id: String
+        while let Some(msg) = self.receiver.recv().await {
+            match msg {
+                ActorMessage::TurnOn => {
+                    if !self.locker_data.get(&locker_id).unwrap(){
+                        return false;
+                    }
+                }
+                ActorMessage::ChangeToFalse => {
+                    *self.locker_data.entry(locker_id).or_insert(false) = true;
+                    return true;
+                }
+                ActorMessage::CheckIfEmpty(sender) => {
+                    sender.send(self.locker_data.clone()).expect("Failed to send");
+                }
             }
         }
+        return false;
     }
-}
+        // match msg {
+        //     ActorMessage::CheckIfEmpty { respond_to } => {
+        //         let cloned_id = locker_id.clone();
+        //         *self.locker_data.entry(locker_id).or_insert(false) = true;
+        //         let empty = *self.locker_data.get(&cloned_id).unwrap();
+        //         let mut m = HashMap::new();
+        //         m.insert(cloned_id, empty);
+        //         let _ = respond_to.send(m);
+        //     }
+        // }
+    }
+
+
 
 
 // lazy_static! {
@@ -76,36 +98,36 @@ impl Actor {
 //     };
 // }
 
-async fn run_actor(mut actor: Actor) {
+// async fn run_actor(mut actor: Actor) {
     
-    while let Some(msg) = actor.receiver.recv().await {
-        actor.handle_message(msg, actor.locker_data.keys().into_iter().next().unwrap().clone())
-    }
-}
+//     while let Some(msg) = actor.receiver.recv().await {
+//         actor.handle_message(msg, actor.locker_data.keys().into_iter().next().unwrap().clone())
+//     }
+// }
 
 
-#[derive(Clone)]
-struct ActorHandle{
-    sender: mpsc::Sender<ActorMessage>
-}
+// #[derive(Clone)]
+// struct ActorHandle{
+//     sender: mpsc::Sender<ActorMessage>
+// }
 
-impl ActorHandle {
-    fn new(locker_id: &String) -> Self {
-        let (sender, receiver) = mpsc::channel(8);
-        let actor = Actor::new(receiver, locker_id);
-        tokio::spawn(run_actor(actor));
+// impl ActorHandle {
+//     fn new(locker_id: &String) -> Self {
+//         let (sender, receiver) = mpsc::channel(8);
+//         let actor = Actor::new(receiver, locker_id);
+//         tokio::spawn(run_actor(actor));
 
-        Self{sender}
-    }
+//         Self{sender}
+//     }
 
-    async fn check_if_empty(&self) -> HashMap<String, bool> {
-        let (send, recv) = oneshot::channel();
-        let msg = ActorMessage::CheckIfEmpty { respond_to: send };
-        let _ = self.sender.send(msg).await;
-        recv.await.expect("Actor killed")
-    }
+//     async fn check_if_empty(&self) -> HashMap<String, bool> {
+//         let (send, recv) = oneshot::channel();
+//         let msg = ActorMessage::CheckIfEmpty { respond_to: send };
+//         let _ = self.sender.send(msg).await;
+//         recv.await.expect("Actor killed")
+//     }
 
-}
+// }
 
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
@@ -118,7 +140,7 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 
 
 
-pub async fn create_package(package: Json<Package>) -> Result<String>{
+pub async fn create_package(package: Json<Package>, handle: mpsc::Sender<ActorMessage>) -> Result<String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
@@ -140,16 +162,28 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
+        let (actor_sender, actor_receiver) = mpsc::channel(16);
+
+        tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(package.locker_id).await });
         tokio::spawn(async move {
             let mut locker = LED::new(locker_pin);
             locker.on();
+            turn_on(actor_sender.clone()).await;
             loop {
                 println!("OUTSITE OF IF");
-                if *ActorHandle::new(&package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){ // DOKOŃCZYĆ !!!!!
-                    println!("IN IF");
+
+                
+                // if *ActorHandle::new(&package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){ // DOKOŃCZYĆ !!!!!
+                //     println!("IN IF");
+                //     locker.off();
+                //     break;
+                // }
+                if check(actor_sender, &package.locker_id).await {
                     locker.off();
                     break;
                 }
+
+
             }
             println!("bro how")
           });
@@ -158,7 +192,20 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     return Ok(String::from("Wszystko poszło (w trybie windows)"))
 }
 
+async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: &String) -> bool {
+    let (send, recv) = oneshot::channel();
+    handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
+    *recv.await.unwrap().get(locker_id).unwrap()
 
+}
+
+async fn turn_on(handle: mpsc::Sender<ActorMessage>) {
+    handle.send(ActorMessage::TurnOn).await.unwrap()
+}
+
+async fn turn_off(handle: mpsc::Sender<ActorMessage>) {
+    handle.send(ActorMessage::ChangeToFalse).await.unwrap();
+}
 
 pub fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     dotenv().ok();
@@ -170,7 +217,9 @@ pub fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     .set(lockers::is_empty.eq(true))
     .execute(connection)?;
 
-    ActorHandle::new(&data.locker_id);
+    // ActorHandle::new(&data.locker_id);
+    let (actor_sender, actor_receiver) = mpsc::channel(16);
+    turn_off(actor_sender.clone())
 
     Ok(String::from("DEV"))
 }
