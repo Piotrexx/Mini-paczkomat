@@ -179,7 +179,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
                 //     locker.off();
                 //     break;
                 // }
-                if check(actor_sender.clone(), &package.locker_id).await {
+                if check(actor_sender.clone(), package.locker_id.clone()).await {
                     locker.off();
                     break;
                 }
@@ -193,10 +193,10 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     return Ok(String::from("Wszystko poszło (w trybie windows)"))
 }
 
-async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: &String) -> bool {
+async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     let (send, recv) = oneshot::channel();
     handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
-    *recv.await.unwrap().get(locker_id).unwrap()
+    *recv.await.unwrap().get(&locker_id).unwrap()
 
 }
 
