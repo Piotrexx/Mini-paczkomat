@@ -57,16 +57,16 @@ impl Actor {
         }
     }
 
-    async fn run(&mut self, locker_id: String) -> bool{ // msg: ActorMessage, locker_id: String
+    async fn run(&mut self, locker_id: &String) -> bool{ // msg: ActorMessage, locker_id: String
         while let Some(msg) = self.receiver.recv().await {
             match msg {
                 ActorMessage::TurnOn => {
-                    if !self.locker_data.get(&locker_id).unwrap(){
+                    if !self.locker_data.get(locker_id).unwrap(){
                         return false;
                     }
                 }
                 ActorMessage::ChangeToFalse => {
-                    *self.locker_data.entry(locker_id).or_insert(false) = true;
+                    *self.locker_data.entry(locker_id.clone()).or_insert(false) = true;
                     return true;
                 }
                 ActorMessage::CheckIfEmpty(sender) => {
@@ -164,8 +164,9 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         let locker_pin = return_gpio_pin(&package.locker_id).await;
         let (actor_sender, actor_receiver) = mpsc::channel(16);
 
-        tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(package.locker_id).await });
+        
         tokio::spawn(async move {
+            tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await });
             let mut locker = LED::new(locker_pin);
             locker.on();
             turn_on(actor_sender.clone()).await;
@@ -178,7 +179,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
                 //     locker.off();
                 //     break;
                 // }
-                if check(actor_sender, &package.locker_id).await {
+                if check(actor_sender.clone(), &package.locker_id).await {
                     locker.off();
                     break;
                 }
@@ -219,7 +220,7 @@ pub fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
 
     // ActorHandle::new(&data.locker_id);
     let (actor_sender, actor_receiver) = mpsc::channel(16);
-    turn_off(actor_sender.clone())
+    turn_off(actor_sender.clone());
 
     Ok(String::from("DEV"))
 }
