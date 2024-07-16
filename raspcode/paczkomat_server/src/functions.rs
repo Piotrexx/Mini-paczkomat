@@ -32,7 +32,7 @@ pub struct CollectPackageStruct {
 
 enum ActorMessage {
     TurnOn,
-    ChangeToFalse,
+    TurnOff,
     CheckIfEmpty(oneshot::Sender<HashMap<String, bool>>)
 }
 
@@ -48,16 +48,16 @@ struct Actor {
 
 
 impl Actor {
-    fn new(receiver: mpsc::Receiver<ActorMessage>, locker_id: &String) -> Self {
+    fn new(receiver: mpsc::Receiver<ActorMessage>, locker_id: &str) -> Self {
         let mut m: HashMap<String, bool> = HashMap::new();
-        m.insert(locker_id.clone(), false);
+        m.insert(locker_id.to_string(), false);
         Actor{
             receiver,
             locker_data: m
         }
     }
 
-    async fn run(&mut self, locker_id: &String) -> bool{ // msg: ActorMessage, locker_id: String
+    async fn run(&mut self, locker_id: &str) -> bool{ // msg: ActorMessage, locker_id: String
         while let Some(msg) = self.receiver.recv().await {
             match msg {
                 ActorMessage::TurnOn => {
@@ -65,8 +65,8 @@ impl Actor {
                         return false;
                     }
                 }
-                ActorMessage::ChangeToFalse => {
-                    *self.locker_data.entry(locker_id.clone()).or_insert(false) = true;
+                ActorMessage::TurnOff => {
+                    *self.locker_data.entry(locker_id.to_string()).or_insert(false) = true;
                     return true;
                 }
                 ActorMessage::CheckIfEmpty(sender) => {
@@ -163,12 +163,14 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
         let (actor_sender, actor_receiver) = mpsc::channel(16);
-
-        
+        let locker_id = package.locker_id.clone();
+        // DOKOŃCZYĆ 
         tokio::spawn(async move {
+            
             tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await });
             let mut locker = LED::new(locker_pin);
             locker.on();
+
             turn_on(actor_sender.clone()).await;
             loop {
                 println!("OUTSITE OF IF");
@@ -179,7 +181,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
                 //     locker.off();
                 //     break;
                 // }
-                if check(actor_sender.clone(), package.locker_id.clone()).await {
+                if check(actor_sender.clone(), locker_id.clone()).await {
                     locker.off();
                     break;
                 }
@@ -205,10 +207,10 @@ async fn turn_on(handle: mpsc::Sender<ActorMessage>) {
 }
 
 async fn turn_off(handle: mpsc::Sender<ActorMessage>) {
-    handle.send(ActorMessage::ChangeToFalse).await.unwrap();
+    handle.send(ActorMessage::TurnOff).await.unwrap();
 }
 
-pub fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
+pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     dotenv().ok();
     use crate::schema::lockers;
     let connection = &mut establish_connection();
@@ -220,7 +222,7 @@ pub fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
 
     // ActorHandle::new(&data.locker_id);
     let (actor_sender, actor_receiver) = mpsc::channel(16);
-    turn_off(actor_sender.clone());
+    turn_off(actor_sender.clone()).await;
 
     Ok(String::from("DEV"))
 }

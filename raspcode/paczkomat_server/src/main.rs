@@ -54,7 +54,7 @@ async fn add_package(package: Json<Package>) -> String{
 
 #[patch("/collect_package", format="json", data="<data>")]
 async fn collect_package(data: Json<CollectPackageStruct>) -> String{
-    empty_locker(data).unwrap()
+    empty_locker(data).await.unwrap()
 }
 
 
