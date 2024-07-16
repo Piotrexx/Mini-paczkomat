@@ -94,8 +94,8 @@ class PackageViewSet(GenericViewSet):
         print(response.content)
         locker.empty = True
         locker.save()
-        package.picked_up = True
-        package.save()
+        package[0].picked_up = True
+        package[0].save()
 
         return Response("Paczka odebrana", status=HTTP_200_OK)
 
