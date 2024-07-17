@@ -57,24 +57,25 @@ impl Actor {
         }
     }
 
-    async fn run(&mut self, locker_id: &str) -> bool{ // msg: ActorMessage, locker_id: String
+    async fn run(&mut self, locker_id: &str){ // msg: ActorMessage, locker_id: String
         while let Some(msg) = self.receiver.recv().await {
             match msg {
                 ActorMessage::TurnOn => {
-                    if !self.locker_data.get(locker_id).unwrap(){
-                        return false;
-                    }
+                    *self.locker_data.entry(locker_id.to_string()).or_insert(false) = false;
+                    // if !self.locker_data.get(locker_id).unwrap(){
+                        
+                    // }
                 }
                 ActorMessage::TurnOff => {
                     *self.locker_data.entry(locker_id.to_string()).or_insert(false) = true;
-                    return true;
+                    // return true;
                 }
                 ActorMessage::CheckIfEmpty(sender) => {
                     sender.send(self.locker_data.clone()).expect("Failed to send");
                 }
             }
         }
-        return false;
+        // return false;
     }
         // match msg {
         //     ActorMessage::CheckIfEmpty { respond_to } => {
@@ -167,7 +168,8 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         // DOKOŃCZYĆ 
         tokio::spawn(async move {
             
-            tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await });
+            // tokio::spawn(async move {  });
+            Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await;
             let mut locker = LED::new(locker_pin);
             locker.on();
 
@@ -198,9 +200,9 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     let (send, recv) = oneshot::channel();
     handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
-    println!("{:?}", recv.await);
-    // recv.await.unwrap().get(&locker_id).unwrap()
-    true
+    // println!("{:?}", recv.await.clone());
+    *recv.await.unwrap().get(&locker_id).unwrap()
+    // true
 
 }
 
