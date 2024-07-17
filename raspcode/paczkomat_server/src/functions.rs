@@ -202,7 +202,7 @@ async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
     println!("{:?}", recv.await);
     // *recv.await.unwrap().get(&locker_id).unwrap()
-    false
+    true
 
 }
 
