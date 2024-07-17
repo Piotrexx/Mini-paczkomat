@@ -40,8 +40,6 @@ enum ActorMessage {
 
 struct Actor {
     receiver: mpsc::Receiver<ActorMessage>,
-    // empty: bool,
-    // locker_id: String
     locker_data: HashMap<String, bool>
 }
 
@@ -57,78 +55,25 @@ impl Actor {
         }
     }
 
-    async fn run(&mut self, locker_id: &str){ // msg: ActorMessage, locker_id: String
+    async fn run(&mut self, locker_id: &str){
         while let Some(msg) = self.receiver.recv().await {
             match msg {
                 ActorMessage::TurnOn => {
                     *self.locker_data.entry(locker_id.to_string()).or_insert(false) = false;
-                    // if !self.locker_data.get(locker_id).unwrap(){
                         
-                    // }
                 }
                 ActorMessage::TurnOff => {
                     *self.locker_data.entry(locker_id.to_string()).or_insert(false) = true;
-                    // return true;
                 }
                 ActorMessage::CheckIfEmpty(sender) => {
                     sender.send(self.locker_data.clone()).expect("Failed to send");
                 }
             }
         }
-        // return false;
     }
-        // match msg {
-        //     ActorMessage::CheckIfEmpty { respond_to } => {
-        //         let cloned_id = locker_id.clone();
-        //         *self.locker_data.entry(locker_id).or_insert(false) = true;
-        //         let empty = *self.locker_data.get(&cloned_id).unwrap();
-        //         let mut m = HashMap::new();
-        //         m.insert(cloned_id, empty);
-        //         let _ = respond_to.send(m);
-        //     }
-        // }
-    }
+}
 
 
-
-
-// lazy_static! {
-//     static ref ARRAY_OF_EMPTYNESS: HashMap<String, bool> = {
-//         let mut m = HashMap::new();
-//         m
-//     };
-// }
-
-// async fn run_actor(mut actor: Actor) {
-    
-//     while let Some(msg) = actor.receiver.recv().await {
-//         actor.handle_message(msg, actor.locker_data.keys().into_iter().next().unwrap().clone())
-//     }
-// }
-
-
-// #[derive(Clone)]
-// struct ActorHandle{
-//     sender: mpsc::Sender<ActorMessage>
-// }
-
-// impl ActorHandle {
-//     fn new(locker_id: &String) -> Self {
-//         let (sender, receiver) = mpsc::channel(8);
-//         let actor = Actor::new(receiver, locker_id);
-//         tokio::spawn(run_actor(actor));
-
-//         Self{sender}
-//     }
-
-//     async fn check_if_empty(&self) -> HashMap<String, bool> {
-//         let (send, recv) = oneshot::channel();
-//         let msg = ActorMessage::CheckIfEmpty { respond_to: send };
-//         let _ = self.sender.send(msg).await;
-//         recv.await.expect("Actor killed")
-//     }
-
-// }
 
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
@@ -168,27 +113,18 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         // DOKOŃCZYĆ 
         tokio::spawn(async move {
             
-            tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
+            let _ = tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
             
             let mut locker = LED::new(locker_pin);
             locker.on();
 
-            // turn_on(actor_sender.clone()).await;
             loop {
                 println!("OUTSITE OF IF");
 
-                
-                // if *ActorHandle::new(&package.locker_id).check_if_empty().await.get(&package.locker_id).unwrap(){ // DOKOŃCZYĆ !!!!!
-                //     println!("IN IF");
-                //     locker.off();
-                //     break;
-                // }
                 if check(actor_sender.clone(), locker_id.clone()).await {
                     locker.off();
                     break;
                 }
-
-
             }
             println!("bro how")
           });
