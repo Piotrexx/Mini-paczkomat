@@ -168,8 +168,8 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         // DOKOŃCZYĆ 
         tokio::spawn(async move {
             
-            // tokio::spawn(async move {  });
-            Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await;
+            tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
+            
             let mut locker = LED::new(locker_pin);
             locker.on();
 
@@ -202,7 +202,7 @@ async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
     println!("{:?}", recv.await);
     // *recv.await.unwrap().get(&locker_id).unwrap()
-    true
+    false
 
 }
 
