@@ -33,7 +33,7 @@ pub struct CollectPackageStruct {
 enum ActorMessage {
     TurnOn,
     TurnOff,
-    CheckIfEmpty(oneshot::Sender<HashMap<String, bool>>)
+    CheckIfEmpty(oneshot::Sender<bool>)
 }
 
 
@@ -173,7 +173,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
             let mut locker = LED::new(locker_pin);
             locker.on();
 
-            turn_on(actor_sender.clone()).await;
+            // turn_on(actor_sender.clone()).await;
             loop {
                 println!("OUTSITE OF IF");
 
