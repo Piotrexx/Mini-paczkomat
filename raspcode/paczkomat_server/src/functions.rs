@@ -86,7 +86,7 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 
 
 
-pub async fn create_package(package: Json<Package>, rx: mpsc::Receiver<HashMap<String, bool>>) -> Result<String>{
+pub async fn create_package(package: Json<Package>) -> Result<String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
@@ -150,7 +150,7 @@ async fn turn_off(handle: mpsc::Sender<ActorMessage>) {
     handle.send(ActorMessage::TurnOff).await.unwrap();
 }
 
-pub async fn empty_locker(data: Json<CollectPackageStruct>, tx: mpsc::Sender<HashMap<String, bool>>) -> Result<String> {
+pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     dotenv().ok();
     use crate::schema::lockers;
     let connection = &mut establish_connection();
