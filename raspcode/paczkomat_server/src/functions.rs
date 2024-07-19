@@ -135,12 +135,12 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 
 async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     let (send, recv) = oneshot::channel();
-    println!("{:?}", recv.await);
-    println!("{:?}", send);
+    // println!("{:?}", recv.await);
+    // println!("{:?}", send);
     handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
     
-    // *recv.await.unwrap().get(&locker_id).unwrap()
-    false
+    *recv.await.unwrap().get(&locker_id).unwrap()
+    
 
 }
 
