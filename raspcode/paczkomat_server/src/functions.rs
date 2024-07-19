@@ -86,7 +86,7 @@ pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
 
 
 
-pub async fn create_package(package: Json<Package>) -> Result<String>{
+pub async fn create_package(package: Json<Package>, rx: mpsc::Receiver<HashMap<String, bool>>) -> Result<String>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
@@ -113,19 +113,19 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         // DOKOŃCZYĆ 
         tokio::spawn(async move {
             
-            let _ = tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
+            // tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
             
             let mut locker = LED::new(locker_pin);
             locker.on();
-
             loop {
                 println!("OUTSITE OF IF");
-
+                
                 if check(actor_sender.clone(), locker_id.clone()).await {
                     locker.off();
                     break;
                 }
-            }
+                tokio::task::yield_now().await;
+            };
             println!("bro how")
           });
         return Ok(String::from("LED załączony"));
@@ -136,9 +136,9 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     let (send, recv) = oneshot::channel();
     handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
-    // println!("{:?}", recv.await);
-    *recv.await.unwrap().get(&locker_id).unwrap()
-    // false
+    println!("{:?}", recv.await);
+    // *recv.await.unwrap().get(&locker_id).unwrap()
+    false
 
 }
 
@@ -150,7 +150,7 @@ async fn turn_off(handle: mpsc::Sender<ActorMessage>) {
     handle.send(ActorMessage::TurnOff).await.unwrap();
 }
 
-pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
+pub async fn empty_locker(data: Json<CollectPackageStruct>, tx: mpsc::Sender<HashMap<String, bool>>) -> Result<String> {
     dotenv().ok();
     use crate::schema::lockers;
     let connection = &mut establish_connection();
@@ -161,6 +161,7 @@ pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     .execute(connection)?;
 
     // ActorHandle::new(&data.locker_id);
+    // tokio::task::yield_now().await;
     let (actor_sender, actor_receiver) = mpsc::channel(16);
     turn_off(actor_sender.clone()).await;
 
