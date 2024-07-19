@@ -137,11 +137,22 @@ async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     let (send, recv) = oneshot::channel();
     
     println!("{:?}", send);
-    // handle.send(ActorMessage::CheckIfEmpty(send)).await.unwrap();
-    ActorMessage::CheckIfEmpty(send);
-    println!("{:?}", recv.await.unwrap().get(&locker_id).unwrap());
-    // *recv.await.unwrap().get(&locker_id).unwrap();
-    false
+    match handle.send(ActorMessage::CheckIfEmpty(send)).await {
+        Ok(_) => println!("Everything OK"),
+        Err(err) => println!("Error: {:?}", err),
+    }
+  
+    match recv.await {
+        Ok(data) => {
+            println!("Data: {:?}", data);
+            data.get(&locker_id).map(|_| true).unwrap_or(false)
+        }
+        Err(err) => {
+            println!("Error: {:?}", err);
+            false
+        }
+    }
+    // false
 
 }
 
