@@ -29,7 +29,6 @@ pub struct CollectPackageStruct {
 }
 
 
-
 enum ActorMessage {
     TurnOn,
     TurnOff,
@@ -112,8 +111,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         let locker_id = package.locker_id.clone();
         // DOKOŃCZYĆ 
         tokio::spawn(async move {
-            
-            // tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
+            tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
             
             let mut locker = LED::new(locker_pin);
             locker.on();
@@ -138,21 +136,23 @@ async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
     
     println!("{:?}", send);
     match handle.send(ActorMessage::CheckIfEmpty(send)).await {
-        Ok(_) => println!("Everything OK"),
-        Err(err) => println!("Error: {:?}", err),
-    }
-  
-    match recv.await {
-        Ok(data) => {
-            println!("Data: {:?}", data);
-            data.get(&locker_id).map(|_| true).unwrap_or(false)
+        Ok(_) => {
+            match recv.await {
+                Ok(data) => {
+                    println!("Data: {:?}", data);
+                    *data.get(&locker_id).unwrap_or(&false)
+                }
+                Err(err) => {
+                    println!("Error: {:?}", err);
+                    false
+                }
+            }
         }
         Err(err) => {
             println!("Error: {:?}", err);
             false
         }
     }
-    // false
 
 }
 
@@ -174,8 +174,7 @@ pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     .set(lockers::is_empty.eq(true))
     .execute(connection)?;
 
-    // ActorHandle::new(&data.locker_id);
-    // tokio::task::yield_now().await;
+    tokio::task::yield_now().await;
     let (actor_sender, actor_receiver) = mpsc::channel(16);
     turn_off(actor_sender.clone()).await;
 
