@@ -114,11 +114,30 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
             tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
             
             let mut locker = LED::new(locker_pin);
+            let (sender, receiver) = oneshot::channel();
+            let handle: mpsc::Sender<ActorMessage>;
+            match handle.send(ActorMessage::CheckIfEmpty(sender)).await {
+                Ok(_) => {
+                    match receiver.await {
+                        Ok(data) => {
+                            println!("Data: {:?}", data);
+                            data.get(&locker_id).unwrap_or(&false);
+                        },
+                        Err(err) => {
+                            println!("Err: {:?}", err)
+                        }
+                    }
+                },
+                Err(err) => {
+                    println!("Error: {:?}", err)
+                }
+            }
             locker.on();
             loop {
                 println!("OUTSITE OF IF");
                 
                 if check(actor_sender.clone(), locker_id.clone()).await {
+                // if one(ActorMessage::CheckIfEmpty(actor_sender)){
                     locker.off();
                     break;
                 }
