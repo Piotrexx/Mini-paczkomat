@@ -114,31 +114,14 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
             tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
             
             let mut locker = LED::new(locker_pin);
-            let (sender, receiver) = oneshot::channel();
-            let handle: mpsc::Sender<ActorMessage>;
-            match handle.send(ActorMessage::CheckIfEmpty(sender)).await {
-                Ok(_) => {
-                    match receiver.await {
-                        Ok(data) => {
-                            println!("Data: {:?}", data);
-                            data.get(&locker_id).unwrap_or(&false);
-                        },
-                        Err(err) => {
-                            println!("Err: {:?}", err)
-                        }
-                    }
-                },
-                Err(err) => {
-                    println!("Error: {:?}", err)
-                }
-            }
+            std::env::set_var(format!("locker_{}", locker_id), "false");
             locker.on();
             loop {
                 println!("OUTSITE OF IF");
-                
-                if check(actor_sender.clone(), locker_id.clone()).await {
-                // if one(ActorMessage::CheckIfEmpty(actor_sender)){
+                let is_empty = std::env::var(format!("locker_{}", locker_id)).expect("Nie znaleziono lockera");
+                if is_empty == "true" { // check(actor_sender.clone(), locker_id.clone()).await
                     locker.off();
+                    std::env::remove_var(format!("locker_{}", locker_id));
                     break;
                 }
                 tokio::task::yield_now().await;
@@ -193,9 +176,7 @@ pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     .set(lockers::is_empty.eq(true))
     .execute(connection)?;
 
-    tokio::task::yield_now().await;
-    let (actor_sender, actor_receiver) = mpsc::channel(16);
-    turn_off(actor_sender.clone()).await;
+    std::env::set_var(format!("locker_{}", data.locker_id), "true");
 
     Ok(String::from("DEV"))
 }
