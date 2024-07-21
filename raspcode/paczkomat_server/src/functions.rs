@@ -14,6 +14,7 @@ use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
 use rust_gpiozero::*;
 use tokio::sync::{oneshot, mpsc};
+use tokio::time::{sleep, Duration};
 // use lazy_static::lazy_static;
 use std::collections::HashMap;
 
@@ -125,6 +126,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
                     break;
                 }
                 tokio::task::yield_now().await;
+                sleep(Duration::from_millis(500));
             };
             println!("bro how")
           });
@@ -177,7 +179,7 @@ pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     .execute(connection)?;
 
     std::env::set_var(format!("locker_{}", data.locker_id), "true");
-
+    tokio::task::yield_now().await;
     Ok(String::from("DEV"))
 }
 
