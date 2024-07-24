@@ -13,10 +13,7 @@ use anyhow::Result;
 use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
 use rust_gpiozero::*;
-use tokio::sync::{oneshot, mpsc};
 use tokio::time::{sleep, Duration};
-// use lazy_static::lazy_static;
-use std::collections::HashMap;
 
 #[derive(Deserialize)]
 pub struct Package {
@@ -28,52 +25,6 @@ pub struct Package {
 pub struct CollectPackageStruct {
     pub locker_id: String,
 }
-
-
-enum ActorMessage {
-    TurnOn,
-    TurnOff,
-    CheckIfEmpty(oneshot::Sender<HashMap<String, bool>>)
-}
-
-
-
-struct Actor {
-    receiver: mpsc::Receiver<ActorMessage>,
-    locker_data: HashMap<String, bool>
-}
-
-
-
-impl Actor {
-    fn new(receiver: mpsc::Receiver<ActorMessage>, locker_id: &str) -> Self {
-        let mut m: HashMap<String, bool> = HashMap::new();
-        m.insert(locker_id.to_string(), false);
-        Actor{
-            receiver,
-            locker_data: m
-        }
-    }
-
-    async fn run(&mut self, locker_id: &str){
-        while let Some(msg) = self.receiver.recv().await {
-            match msg {
-                ActorMessage::TurnOn => {
-                    *self.locker_data.entry(locker_id.to_string()).or_insert(false) = false;
-                        
-                }
-                ActorMessage::TurnOff => {
-                    *self.locker_data.entry(locker_id.to_string()).or_insert(false) = true;
-                }
-                ActorMessage::CheckIfEmpty(sender) => {
-                    sender.send(self.locker_data.clone()).expect("Failed to send");
-                }
-            }
-        }
-    }
-}
-
-
 
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
@@ -111,15 +62,13 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         let locker_id = package.locker_id.clone();
 
         tokio::spawn(async move {
-            // tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
             
             let mut locker = LED::new(locker_pin);
             std::env::set_var(format!("locker_{}", locker_id), "false");
             locker.on();
             loop {
-                // println!("OUTSITE OF IF");
                 let is_empty = std::env::var(format!("locker_{}", locker_id)).expect("Nie znaleziono lockera");
-                if is_empty == "true" { // check(actor_sender.clone(), locker_id.clone()).await
+                if is_empty == "true" {
                     locker.off();
                     std::env::remove_var(format!("locker_{}", locker_id));
                     break;
@@ -127,44 +76,10 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
                 tokio::task::yield_now().await;
                 sleep(Duration::from_millis(500));
             };
-            // println!("bro how")
           });
         return Ok(String::from("LED załączony"));
     }
     return Ok(String::from("Wszystko poszło (w trybie windows)"))
-}
-
-async fn check(handle: mpsc::Sender<ActorMessage>, locker_id: String) -> bool {
-    let (send, recv) = oneshot::channel();
-    
-    println!("{:?}", send);
-    match handle.send(ActorMessage::CheckIfEmpty(send)).await {
-        Ok(_) => {
-            match recv.await {
-                Ok(data) => {
-                    println!("Data: {:?}", data);
-                    *data.get(&locker_id).unwrap_or(&false)
-                }
-                Err(err) => {
-                    println!("Error: {:?}", err);
-                    false
-                }
-            }
-        }
-        Err(err) => {
-            println!("Error: {:?}", err);
-            false
-        }
-    }
-
-}
-
-async fn turn_on(handle: mpsc::Sender<ActorMessage>) {
-    handle.send(ActorMessage::TurnOn).await.unwrap()
-}
-
-async fn turn_off(handle: mpsc::Sender<ActorMessage>) {
-    handle.send(ActorMessage::TurnOff).await.unwrap();
 }
 
 pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {

@@ -84,25 +84,26 @@ class PackageViewSet(GenericViewSet):
     @action(detail=False, methods=['patch'])
     def collect_package(self, request):
         package = Package.objects.filter(receiver=request.user, picked_up=False)[:1]
-        print(package.values())
+
         if package.exists() is False:
             return Response("Użytkownik nie posiada żadnych paczek", status=HTTP_404_NOT_FOUND)
+
         locker = Locker.objects.get(locker_id=package[0].locker_id)
-        print(locker.paczkomat)
         paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)
+
         response = requests.patch(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/collect_package", data=json.dumps({"locker_id": str(locker.locker_id)}), headers= {"Content-Type": "application/json"})
-        print(response.content)
+
         locker.empty = True
         locker.save()
-        package[0].picked_up = True
-        package[0].save()
+        package = package[0]
+        package.picked_up = True
+        package.save()
 
         return Response("Paczka odebrana", status=HTTP_200_OK)
 
-
     @action(detail=False, methods=['get'])
     def my_packages(self, request):
-        return Response(self.serializer_class(Package.objects.filter(receiver=request.user), many=True).data)
+        return Response(self.serializer_class(Package.objects.filter(receiver=request.user, picked_up=False), many=True).data)
 
 
 class PaczkomatViewSet(GenericViewSet):
