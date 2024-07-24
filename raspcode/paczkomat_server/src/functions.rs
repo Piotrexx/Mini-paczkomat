@@ -108,7 +108,6 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
 
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
-        let (actor_sender, actor_receiver) = mpsc::channel(16);
         let locker_id = package.locker_id.clone();
 
         tokio::spawn(async move {
