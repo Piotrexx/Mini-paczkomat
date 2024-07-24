@@ -110,15 +110,15 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
         let locker_pin = return_gpio_pin(&package.locker_id).await;
         let (actor_sender, actor_receiver) = mpsc::channel(16);
         let locker_id = package.locker_id.clone();
-        // DOKOŃCZYĆ 
+
         tokio::spawn(async move {
-            tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
+            // tokio::spawn(async move { Actor::new(actor_receiver, &package.locker_id).run(&package.locker_id).await; });
             
             let mut locker = LED::new(locker_pin);
             std::env::set_var(format!("locker_{}", locker_id), "false");
             locker.on();
             loop {
-                println!("OUTSITE OF IF");
+                // println!("OUTSITE OF IF");
                 let is_empty = std::env::var(format!("locker_{}", locker_id)).expect("Nie znaleziono lockera");
                 if is_empty == "true" { // check(actor_sender.clone(), locker_id.clone()).await
                     locker.off();
@@ -128,7 +128,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
                 tokio::task::yield_now().await;
                 sleep(Duration::from_millis(500));
             };
-            println!("bro how")
+            // println!("bro how")
           });
         return Ok(String::from("LED załączony"));
     }
