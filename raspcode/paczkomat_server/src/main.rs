@@ -5,9 +5,15 @@ use diesel::RunQueryDsl;
 use functions::{create_locker, create_package,empty_locker, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, Package, CollectPackageStruct};
 use models::Locker;
 use rocket::serde::json::Json;
+use rocket_cors::{CorsOptions, AllowedOrigins, AllowedHeaders};
+use rocket::http::Method;
+use dotenv::dotenv;
 mod functions;
 #[macro_use] extern crate rocket;
 use tokio;
+
+
+
 
 
 
@@ -60,7 +66,26 @@ async fn collect_package(data: Json<CollectPackageStruct>) -> String{
 
 #[launch]
 fn rocket() -> _ {
+    dotenv().ok();
+    let url = std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env.");
+    let cors = CorsOptions {
+        allowed_origins: AllowedOrigins::some_exact(&[url]),
+        allowed_methods: vec![
+            Method::Get,
+            Method::Post,
+            Method::Put,
+            Method::Delete,
+            Method::Options,
+        ].into_iter().map(From::from).collect(),
+        allowed_headers: AllowedHeaders::some(&["Authorization","Content-Type",]),
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()
+    .expect("error while building CORS");
+
     rocket::build()
+    .attach(cors)
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
