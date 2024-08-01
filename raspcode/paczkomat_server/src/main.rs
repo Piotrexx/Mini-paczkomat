@@ -2,7 +2,7 @@ pub mod schema;
 pub mod models;
 use std::vec;
 use diesel::RunQueryDsl;
-use functions::{create_locker, create_package,empty_locker, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, Package, CollectPackageStruct};
+use functions::{create_locker, create_package,empty_locker, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, get_location, Package, CollectPackageStruct};
 use models::Locker;
 use rocket::serde::json::Json;
 use rocket_cors::{CorsOptions, AllowedOrigins, AllowedHeaders};
@@ -83,6 +83,8 @@ fn rocket() -> _ {
     }
     .to_cors()
     .expect("error while building CORS");
+
+    get_location(return_local_ipaddress().unwrap());
 
     rocket::build()
     .attach(cors)

@@ -14,6 +14,8 @@ use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
 use rust_gpiozero::*;
 use tokio::time::{sleep, Duration};
+use geolocation;
+
 
 #[derive(Deserialize)]
 pub struct Package {
@@ -232,4 +234,11 @@ pub fn establish_connection() -> SqliteConnection {
     let database_url = String::from("lockers.sqlite");
 
     SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
+}
+
+
+pub fn get_location(ip_address: IpAddr){
+    let info = geolocation::find(&ip_address.to_string().as_str()).unwrap();
+    println!("lat: {:?}",info.latitude);
+    println!("long: {:?}", info.longitude)
 }
