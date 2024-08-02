@@ -17,6 +17,7 @@ diesel = { version = "2.0.2", features = ["sqlite", "returning_clauses_for_sqlit
 lazy_static = "1.5.0"
 rocket_cors = "0.6.0"
 geolocation = "0.2.1"
+public-ip = "0.2"
 
 [dependencies.uuid]
 version = "1.8.0"

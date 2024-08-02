@@ -237,8 +237,8 @@ pub fn establish_connection() -> SqliteConnection {
 }
 
 
-pub fn get_location(ip_address: IpAddr){
-    let info = geolocation::find(&ip_address.to_string().as_str()).unwrap();
+pub async fn get_location(){
+    let info = geolocation::find(&public_ip::addr().await.unwrap().to_string().as_str()).unwrap();
     println!("lat: {:?}",info.latitude);
     println!("long: {:?}", info.longitude)
 }

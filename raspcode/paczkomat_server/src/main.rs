@@ -84,7 +84,7 @@ fn rocket() -> _ {
     .to_cors()
     .expect("error while building CORS");
 
-    get_location(return_local_ipaddress().unwrap());
+    get_location();
 
     rocket::build()
     .attach(cors)
