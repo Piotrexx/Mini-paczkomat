@@ -24,6 +24,7 @@ fn hello(name: &str, age: u8) -> String {
 
 #[get("/check_or_create")]
 async fn check() -> () {
+    get_location().await;
     ping_or_create().await;
 }
 
@@ -84,7 +85,6 @@ fn rocket() -> _ {
     .to_cors()
     .expect("error while building CORS");
 
-    get_location();
 
     rocket::build()
     .attach(cors)
