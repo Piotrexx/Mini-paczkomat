@@ -12,19 +12,8 @@ mod functions;
 #[macro_use] extern crate rocket;
 use tokio;
 
-
-
-
-
-
-#[get("/hello/<name>/<age>")]
-fn hello(name: &str, age: u8) -> String {
-    format!("Hello, {} year old named {}!", age, name)
-}
-
 #[get("/check_or_create")]
 async fn check() -> () {
-    get_location().await;
     ping_or_create().await;
 }
 
@@ -91,6 +80,6 @@ fn rocket() -> _ {
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![hello, check, add_locker, add_package, all_lockers, collect_package])
+    .mount("/", routes![check, add_locker, add_package, all_lockers, collect_package])
 }
 

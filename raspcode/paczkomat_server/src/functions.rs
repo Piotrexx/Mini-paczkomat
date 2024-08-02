@@ -235,10 +235,3 @@ pub fn establish_connection() -> SqliteConnection {
 
     SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
 }
-
-
-pub async fn get_location(){
-    let info = geolocation::find(&public_ip::addr().await.unwrap().to_string().as_str()).unwrap();
-    println!("lat: {:?}",info.latitude);
-    println!("long: {:?}", info.longitude)
-}
