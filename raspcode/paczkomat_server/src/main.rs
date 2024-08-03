@@ -2,13 +2,17 @@ pub mod schema;
 pub mod models;
 use std::vec;
 use diesel::RunQueryDsl;
-use functions::{create_locker, create_package,empty_locker, establish_connection, get_avaible_port, ping_or_create, return_local_ipaddress, get_location, Package, CollectPackageStruct};
+use functions::{create_locker, create_package,empty_locker, ping_or_create};
+use utils::{establish_connection, get_avaible_port, return_local_ipaddress};
+use structs::{Package, CollectPackageStruct};
 use models::Locker;
 use rocket::serde::json::Json;
 use rocket_cors::{CorsOptions, AllowedOrigins, AllowedHeaders};
 use rocket::http::Method;
 use dotenv::dotenv;
 mod functions;
+mod utils;
+mod structs;
 #[macro_use] extern crate rocket;
 use tokio;
 
