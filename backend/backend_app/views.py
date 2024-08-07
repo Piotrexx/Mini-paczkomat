@@ -78,10 +78,10 @@ class PackageViewSet(GenericViewSet):
 
     @action(detail=False, methods=['patch'])
     def collect_package(self, request):
-        package = Package.objects.filter(receiver=request.user, picked_up=False)[:1]
-
-        if package.exists() is False:
-            return Response("Użytkownik nie posiada żadnych paczek", status=HTTP_404_NOT_FOUND)
+        try:
+            package = Package.objects.get(receiver=request.user, picked_up=False, package_code=request.data['package_code'])
+        except:
+            return Response("Nie poprawny kod", status=HTTP_404_NOT_FOUND)
 
         locker = Locker.objects.get(locker_id=package[0].locker_id)
         paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)

@@ -97,9 +97,6 @@ pub async fn create_locker(gpio: i32) -> Result<String> {
     };
 
     diesel::insert_into(lockers::table).values(&new_locker).execute(connection)?;
-    // .returning(Locker::as_returning())
-    // .get_result(connection)
-    // .expect("Zapis nie udany");
 
     let response = client
         .post(Url::parse(&url)?)

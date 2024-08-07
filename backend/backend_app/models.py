@@ -1,9 +1,9 @@
-import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import MinValueValidator, MaxValueValidator
+from .utils import get_package_safe_code
 
 class CustomUserManager(BaseUserManager):
     def create(self, **kwargs):
@@ -57,9 +57,8 @@ class Locker(models.Model):
     empty = models.BooleanField(default=True)
     paczkomat = models.ForeignKey(Paczkomat, on_delete=models.CASCADE)
 
-# POMYŚLEĆ NAD STRUKTURĄ MODELU PACZKI (czy dodawać kod czy nie (i jaki))
 class Package(models.Model):
-    # package_code = models.UUIDField(primary_key=True, editable=False)
+    package_code = models.IntegerField(default=get_package_safe_code, editable=False)
     package_name = models.CharField(max_length=100)
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="receiver")
     locker = models.ForeignKey(Locker, on_delete=models.CASCADE, related_name="locker")
