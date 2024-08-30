@@ -108,12 +108,9 @@ pub async fn create_locker(gpio: i32) -> Result<String> {
     Ok(format!("Dane zostały zapisane poprawnie, \n Kod odpowiedzi requesta: {}", response.status()))
 }
 
-pub async fn ping_or_create() {
+pub async fn ping_or_create() -> u16{
     dotenv().ok(); 
-        
-    // let mut data = HashMap::new();
-    // data.insert("id", std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env."));
-    // data.insert("ip", return_local_ipaddress().unwrap().to_string());
+
     let url = format!("{}/paczkomat/add_paczkomat_or_check/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
@@ -133,12 +130,7 @@ pub async fn ping_or_create() {
         .send()
         .await
         .unwrap();
-
-    if response.status().is_success() {
-        println!("Request wysłany pomyślnie!");
-    } else {
-        println!("Wystąpił błąd: {}", response.status());
-    }
     
+    response.status().as_u16()
 }
 

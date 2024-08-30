@@ -10,3 +10,9 @@ pub struct Package {
 pub struct CollectPackageStruct {
     pub locker_id: String,
 }
+
+#[derive(Deserialize)]
+pub struct LockerCreationStruct {
+    pub paczkomat_id: String,
+    pub locker_pin: Vec<u8>
+}
