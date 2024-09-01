@@ -14,5 +14,5 @@ pub struct CollectPackageStruct {
 #[derive(Deserialize)]
 pub struct LockerCreationStruct {
     pub paczkomat_id: String,
-    pub locker_pin: Vec<u8>
+    pub locker_pin: Vec<i32>
 }

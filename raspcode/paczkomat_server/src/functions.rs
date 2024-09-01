@@ -1,4 +1,5 @@
 use dotenv::dotenv;
+use rocket::http::Status;
 use crate::models::Locker;
 use reqwest::{Client, Url};
 use rocket::serde::json::Json;
@@ -14,16 +15,16 @@ use crate::utils::{locker_exists, establish_connection, return_gpio_pin, return_
 use crate::structs::{Package, CollectPackageStruct};
 
 
-pub async fn create_package(package: Json<Package>) -> Result<String>{
+pub async fn create_package(package: Json<Package>) -> Result<(), Status>{
     dotenv().ok();
     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
     if !uuid.eq(&package.paczkomat_id) {
-        return Ok(String::from("Error: 400"));
+        return Err(Status::NotFound);
     }
 
     let exists = locker_exists(&package.locker_id).await;
     if exists == false {
-        return Ok(String::from("Error, przesłane ID skrzynki nie istnieje"))
+        return Err(Status::NotFound)
     }
 
     use crate::schema::lockers;
@@ -32,7 +33,7 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
     diesel::update(lockers::table)
     .filter(lockers::lockerid.eq(&package.locker_id))
     .set(lockers::is_empty.eq(false))
-    .execute(connection)?;
+    .execute(connection).unwrap();
 
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
@@ -54,9 +55,8 @@ pub async fn create_package(package: Json<Package>) -> Result<String>{
                 sleep(Duration::from_millis(500));
             };
           });
-        return Ok(String::from("LED załączony"));
     }
-    return Ok(String::from("Wszystko poszło (w trybie windows)"))
+    Ok(())
 }
 
 pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
@@ -74,7 +74,7 @@ pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
     Ok(String::from("DEV"))
 }
     
-pub async fn create_locker(gpio: i32) -> Result<String> {
+pub async fn create_locker(gpio: i32) -> Result<()> {
     dotenv().ok();
     let url = format!("{}/locker/add_locker/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
     let client = Client::new();
@@ -105,7 +105,7 @@ pub async fn create_locker(gpio: i32) -> Result<String> {
         .await
         ?;
 
-    Ok(format!("Dane zostały zapisane poprawnie, \n Kod odpowiedzi requesta: {}", response.status()))
+    Ok(println!("reposnse code (debug): {}", response.status()))
 }
 
 pub async fn ping_or_create() -> u16{

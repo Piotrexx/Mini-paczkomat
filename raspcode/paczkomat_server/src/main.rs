@@ -33,7 +33,7 @@ async fn add_locker(locker_creation_data: Json<LockerCreationStruct>) -> Status 
         return Status::Forbidden;
     }
     
-    let pins: Vec<i32> = vec![23, 27, 22];
+    let pins = locker_creation_data.locker_pin.clone();
     for pin in pins {
             create_locker(pin).await;
     }
@@ -42,23 +42,21 @@ async fn add_locker(locker_creation_data: Json<LockerCreationStruct>) -> Status 
 }
 
 #[get("/all_lockers")]
-fn all_lockers() {
+fn all_lockers() -> Json<Vec<Locker>> {
     use crate::schema::lockers::dsl::*;
     let mut connection = establish_connection();
-    let lockers_query = lockers.load::<Locker>(&mut connection);
+    let lockers_query = lockers.load::<Locker>(&mut connection).unwrap();
 
-    for locker in lockers_query.unwrap() {
-        println!("locker id: {}, is empty: {}", locker.lockerid, locker.is_empty)
-    }
+    Json(lockers_query)
 }  
 
 #[post("/add_package", format="json", data="<package>")]
-async fn add_package(package: Json<Package>) -> String{
+async fn add_package(package: Json<Package>) -> Status{
     match create_package(package).await {
-        Ok(code) => format!("Code: {}", code),
+        Ok(_) => Status::Created,
         Err(err) => {
-            println!("Error: {}", err);
-            format!("Error: {}", err)
+            println!("Error code (Debug): {}", err);
+            err
         }
     }
 }
