@@ -1,4 +1,5 @@
-use serde::Deserialize;
+use rocket::http::Status;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct Package {
@@ -15,4 +16,10 @@ pub struct CollectPackageStruct {
 pub struct LockerCreationStruct {
     pub paczkomat_id: String,
     pub locker_pin: Vec<i32>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ResponseStruct {
+    pub massage: String,
+    pub status: Status
 }

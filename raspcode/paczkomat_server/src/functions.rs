@@ -59,7 +59,7 @@ pub async fn create_package(package: Json<Package>) -> Result<(), Status>{
     Ok(())
 }
 
-pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
+pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<Status> {
     dotenv().ok();
     use crate::schema::lockers;
     let connection = &mut establish_connection();
@@ -71,7 +71,8 @@ pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<String> {
 
     std::env::set_var(format!("locker_{}", data.locker_id), "true");
     tokio::task::yield_now().await;
-    Ok(String::from("DEV"))
+    
+    Ok(Status::Ok)
 }
     
 pub async fn create_locker(gpio: i32) -> Result<()> {

@@ -4,7 +4,7 @@ use std::vec;
 use diesel::RunQueryDsl;
 use functions::{create_locker, create_package,empty_locker, ping_or_create};
 use utils::{establish_connection, get_avaible_port, return_local_ipaddress};
-use structs::{Package, CollectPackageStruct, LockerCreationStruct};
+use structs::{Package, CollectPackageStruct, LockerCreationStruct, ResponseStruct};
 use models::Locker;
 use rocket::serde::json::Json;
 use rocket_cors::{CorsOptions, AllowedOrigins, AllowedHeaders};
@@ -21,8 +21,8 @@ mod structs;
 #[macro_use] extern crate rocket;
 
 #[get("/check_or_create")]
-async fn check() -> String {
-    format!("KOD: {}", ping_or_create().await)
+async fn check() -> () {
+    ping_or_create().await;
 }
 
 #[post("/add_locker", format="json", data="<locker_creation_data>")]
@@ -51,19 +51,23 @@ fn all_lockers() -> Json<Vec<Locker>> {
 }  
 
 #[post("/add_package", format="json", data="<package>")]
-async fn add_package(package: Json<Package>) -> Status{
+async fn add_package(package: Json<Package>) -> Json<ResponseStruct>{
     match create_package(package).await {
-        Ok(_) => Status::Created,
+        Ok(_) => Json(ResponseStruct { massage: String::from("Dodano paczkę do szafki"), status: Status::Created}),
         Err(err) => {
             println!("Error code (Debug): {}", err);
-            err
+            Json(ResponseStruct { massage: String::from("Wystąpił błąd (error wyświetlony w konsoli)"), status: err })
         }
     }
 }
 
 #[patch("/collect_package", format="json", data="<data>")]
-async fn collect_package(data: Json<CollectPackageStruct>) -> String{
-    empty_locker(data).await.unwrap()
+async fn collect_package(data: Json<CollectPackageStruct>) -> Json<ResponseStruct>{
+    match empty_locker(data).await {
+        Ok(status_code) => Json(ResponseStruct { massage: String::from("Opróżniono szafkę"), status: status_code }),
+        Err(err) => Json(ResponseStruct { massage: format!("Error: {}", err), status: Status::InternalServerError })
+    }
+    
 }
 
 
