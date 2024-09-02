@@ -21,8 +21,11 @@ mod structs;
 #[macro_use] extern crate rocket;
 
 #[get("/check_or_create")]
-async fn check() -> () {
-    ping_or_create().await;
+async fn check() -> Json<ResponseStruct> {
+    match ping_or_create().await {
+        Ok(response) => Json(ResponseStruct { massage: format!("Zpingowano główny serwer (kod statusu od głównego serwera: {}", response.status()), status: Status::Ok  }),
+        Err(err_response) => Json(ResponseStruct { massage: format!("Wystąpił błąd podacz wysyłania zapytania do głównego serwera: {}", err_response), status: Status::InternalServerError })
+    }
 }
 
 #[post("/add_locker", format="json", data="<locker_creation_data>")]

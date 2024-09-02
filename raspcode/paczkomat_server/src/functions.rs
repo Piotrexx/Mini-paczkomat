@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use rocket::http::Status;
 use crate::models::Locker;
-use reqwest::{Client, Url};
+use reqwest::{Client, Response, Url};
 use rocket::serde::json::Json;
 use serde_json::json;
 use std::str::FromStr;
@@ -109,7 +109,7 @@ pub async fn create_locker(gpio: i32) -> Result<()> {
     Ok(println!("reposnse code (debug): {}", response.status()))
 }
 
-pub async fn ping_or_create() -> u16{
+pub async fn ping_or_create() -> Result<Response>{
     dotenv().ok(); 
 
     let url = format!("{}/paczkomat/add_paczkomat_or_check/", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."));
@@ -125,13 +125,10 @@ pub async fn ping_or_create() -> u16{
         "port": port_num
     });
 
-    let response = client
+    Ok(client
         .post(Url::parse(&url).unwrap())
         .json(&data)
         .send()
-        .await
-        .unwrap();
-    
-    response.status().as_u16()
+        .await?)   
 }
 
