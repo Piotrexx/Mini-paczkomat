@@ -1,10 +1,9 @@
 x-defaults: &defaults
   build: .
-  image: backend
+  image: paczkomat
   pull_policy: never
-  env_file: .env
   environment:
-    - DATABASE_URL=postgis://postgres:hotjajaballs@postgres:5432/backend_app
+    - DATABASE_URL=postgis://postgres:hotjajaballs@postgres:5432/paczkomat
 
 services:
   web:
@@ -39,7 +38,7 @@ services:
     attach: false
     environment:
       - POSTGRES_PASSWORD=hotjajaballs
-      - POSTGRES_DB=backend_app
+      - POSTGRES_DB=paczkomat
     volumes: [db-data:/var/lib/postgresql/data/]
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
