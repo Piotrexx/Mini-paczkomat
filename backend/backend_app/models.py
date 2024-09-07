@@ -1,8 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.gis.db import models as geo_model
 from .utils import get_package_safe_code
 
 class CustomUserManager(BaseUserManager):
@@ -50,6 +50,9 @@ class Paczkomat(models.Model):
     id = models.UUIDField(primary_key=True)
     ip_address = models.GenericIPAddressField(protocol='IPv4')
     port = models.IntegerField(validators=[MinValueValidator(8001), MaxValueValidator(9000)], default=None, null=True)
+    location_point = geo_model.PointField()
+    osm_id = models.BigIntegerField(default=None)
+    osm_type = models.CharField(max_length=1, default=None, null=True)
 
 class Locker(models.Model):
     locker_id = models.UUIDField(primary_key=True)

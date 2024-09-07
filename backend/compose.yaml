@@ -1,0 +1,50 @@
+x-defaults: &defaults
+  build: .
+  image: backend
+  pull_policy: never
+  env_file: .env
+  environment:
+    - DATABASE_URL=postgis://postgres:hotjajaballs@postgres:5432/backend_app
+
+services:
+  web:
+    <<: *defaults
+    ports: [8000:8000]
+    volumes: &app_volumes
+      - ./backend_app/migrations/:/usr/src/app/backend_app/migrations/
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /usr/src/app/
+          ignore:
+            - backend_app/migrations/
+        - action: rebuild
+          path: requirements.txt
+
+  migration:
+    <<: *defaults
+    command: python manage.py migrate
+    volumes: *app_volumes
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+  postgres:
+    image: postgis/postgis
+    attach: false
+    environment:
+      - POSTGRES_PASSWORD=hotjajaballs
+      - POSTGRES_DB=backend_app
+    volumes: [db-data:/var/lib/postgresql/data/]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+volumes:
+  db-data:

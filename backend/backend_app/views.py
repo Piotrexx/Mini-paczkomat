@@ -7,6 +7,8 @@ from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_200_OK, HTTP_201_CREA
 from backend_app.serializers import UserSerializer, PackageSerializer, LockerSerializer, PaczkomatSerializer
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
+from django.contrib.gis.measure import D
+from django.contrib.gis.geos import Point
 import requests
 import json
 
@@ -20,7 +22,7 @@ class UserViewSet(GenericViewSet):
         serializer.is_valid(raise_exception=True)
 
         try:
-            user = serializer.save()
+            serializer.save()
             return Response("User Created")
         except IntegrityError:
             return Response(
@@ -61,7 +63,7 @@ class PackageViewSet(GenericViewSet):
         locker = Locker.objects.filter(empty=True)[:1][0]
         serializer.save(locker=locker, receiver=User.objects.get(id=request.data['receiver']))
         paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)
-        response = requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data=json.dumps({"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}), headers= {"Content-Type": "application/json"})
+        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data=json.dumps({"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}), headers= {"Content-Type": "application/json"})
         locker.empty = False
         locker.save()
         return Response(f"Nadano przesyłkę do skrytki: {locker.locker_id}", status=HTTP_201_CREATED)
@@ -78,15 +80,22 @@ class PackageViewSet(GenericViewSet):
 
     @action(detail=False, methods=['patch'])
     def collect_package(self, request):
+        if not Package.objects.filter(
+                location_point__distance_lte=(
+                    Point(float(request.data["lat"]), float(request.data["lon"])),
+                    D(m=int(3)),
+                )).exists():
+            return Response("Nie można otworzyć skrytki z tak dalekiej odległości", status=HTTP_403_FORBIDDEN)
+        
         try:
             package = Package.objects.get(receiver=request.user, picked_up=False, package_code=request.data['package_code'])
-        except:
+        except Exception:
             return Response("Nie poprawny kod", status=HTTP_404_NOT_FOUND)
 
         locker = Locker.objects.get(locker_id=package[0].locker_id)
         paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)
 
-        response = requests.patch(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/collect_package", data=json.dumps({"locker_id": str(locker.locker_id)}), headers= {"Content-Type": "application/json"})
+        requests.patch(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/collect_package", data=json.dumps({"locker_id": str(locker.locker_id)}), headers= {"Content-Type": "application/json"})
 
         locker.empty = True
         locker.save()
