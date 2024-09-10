@@ -7,3 +7,4 @@ geopy
 requests
 python-dotenv
 psycopg2-binary
+uuid
