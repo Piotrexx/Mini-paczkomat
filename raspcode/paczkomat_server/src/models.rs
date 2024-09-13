@@ -9,3 +9,12 @@ pub struct Locker {
     pub gpio: i32,
     pub is_empty: bool
 }
+
+
+#[derive(Serialize, Selectable, Queryable, Insertable, Deserialize)]
+#[diesel(table_name=crate::schema::package)]
+#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+pub struct Package {
+    pub packageid: i32,
+    pub locker_id: String
+}

@@ -1,4 +1,5 @@
 from backend_app.models import User, Package, Locker, Paczkomat
+from backend_app.permissions import DistancePermission
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
@@ -7,8 +8,6 @@ from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_200_OK, HTTP_201_CREA
 from backend_app.serializers import UserSerializer, PackageSerializer, LockerSerializer, PaczkomatSerializer
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404
-from django.contrib.gis.measure import D
-from django.contrib.gis.geos import Point
 import requests
 import json
 
@@ -62,11 +61,23 @@ class PackageViewSet(GenericViewSet):
         serializer.is_valid(raise_exception=True)
         locker = Locker.objects.filter(empty=True)[:1][0]
         serializer.save(locker=locker, receiver=User.objects.get(id=request.data['receiver']))
-        paczkomat = Paczkomat.objects.get(id=locker.paczkomat.id)
-        requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data=json.dumps({"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}), headers= {"Content-Type": "application/json"})
+        return Response(f"Udaj się do najbliższego paczkomatu i nadaj przesyłkę, oto kod przesyłki: {serializer.data["package_code"]}", status=HTTP_201_CREATED)
+
+
+    @action(detail=False, methods=['put'], permission_classes=[DistancePermission])
+    def send_package(self, request):
+        try: 
+            Paczkomat.objects.get(id=request.data['paczkomat_id'])
+        except Exception:
+            return Response("Nice Try Baldini ;)", status=HTTP_403_FORBIDDEN)
+        
+        locker = Package.objects.get(package_code=request.data['package_code'], picked_up=False).locker
+        # requests.post(url=f"http://{paczkomat.ip_address}:{paczkomat.port}/add_package", data=json.dumps({"locker_id": str(locker.locker_id),"paczkomat_id": str(paczkomat.id)}), headers= {"Content-Type": "application/json"})
         locker.empty = False
         locker.save()
-        return Response(f"Nadano przesyłkę do skrytki: {locker.locker_id}", status=HTTP_201_CREATED)
+
+        return Response("Paczka nadana", status=HTTP_200_OK)
+    
 
 
     @action(detail=False, methods=['get'], permission_classes=[IsAdminUser])
@@ -78,15 +89,8 @@ class PackageViewSet(GenericViewSet):
     def all_inside(self, request):
         return Response(self.serializer_class(Package.objects.filter(picked_up=False), many=True).data)
 
-    @action(detail=False, methods=['patch'])
+    @action(detail=False, methods=['patch'], permission_classes=[DistancePermission])
     def collect_package(self, request):
-        if not Package.objects.filter(
-                location_point__distance_lte=(
-                    Point(float(request.data["lat"]), float(request.data["lon"])),
-                    D(m=int(3)),
-                )).exists():
-            return Response("Nie można otworzyć skrytki z tak dalekiej odległości", status=HTTP_403_FORBIDDEN)
-        
         try:
             package = Package.objects.get(receiver=request.user, picked_up=False, package_code=request.data['package_code'])
         except Exception:

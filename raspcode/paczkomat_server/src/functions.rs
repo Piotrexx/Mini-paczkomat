@@ -10,7 +10,6 @@ use anyhow::Result;
 use rust_gpiozero::*;
 use diesel::prelude::*;
 use tokio::time::{sleep, Duration};
-use geolocation;
 use crate::utils::{locker_exists, establish_connection, return_gpio_pin, return_local_ipaddress};
 use crate::structs::{Package, CollectPackageStruct};
 
