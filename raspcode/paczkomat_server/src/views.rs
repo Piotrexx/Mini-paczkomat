@@ -1,6 +1,6 @@
 use dotenv::dotenv;
 use rocket::http::Status;
-use crate::models::Locker;
+use crate::models::{Locker, PackageModel};
 use reqwest::{Client, Response, Url};
 use rocket::serde::json::Json;
 use serde_json::json;
@@ -27,12 +27,18 @@ pub async fn create_package(package: Json<Package>) -> Result<(), Status>{
     }
 
     use crate::schema::lockers;
+    use crate::schema::package;
     let connection = &mut establish_connection();
 
     diesel::update(lockers::table)
     .filter(lockers::lockerid.eq(&package.locker_id))
     .set(lockers::is_empty.eq(false))
     .execute(connection).unwrap();
+
+
+
+
+    diesel::insert_into(package::table).values(PackageModel {packageid: package.package_id, locker_id: package.locker_id});
 
     if cfg!(unix) {
         let locker_pin = return_gpio_pin(&package.locker_id).await;
@@ -58,10 +64,13 @@ pub async fn create_package(package: Json<Package>) -> Result<(), Status>{
     Ok(())
 }
 
+
 pub async fn empty_locker(data: Json<CollectPackageStruct>) -> Result<Status> {
     dotenv().ok();
     use crate::schema::lockers;
     let connection = &mut establish_connection();
+
+
 
     diesel::update(lockers::table)
     .filter(lockers::lockerid.eq(&data.locker_id))

@@ -14,7 +14,7 @@ pub struct Locker {
 #[derive(Serialize, Selectable, Queryable, Insertable, Deserialize)]
 #[diesel(table_name=crate::schema::package)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
-pub struct Package {
+pub struct PackageModel {
     pub packageid: i32,
     pub locker_id: String
 }

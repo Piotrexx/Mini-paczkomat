@@ -2,19 +2,19 @@ pub mod schema;
 pub mod models;
 use std::vec;
 use diesel::RunQueryDsl;
-use functions::{create_locker, create_package,empty_locker, ping_or_create};
-use utils::{establish_connection, get_avaible_port, return_local_ipaddress};
+use views::{create_locker, create_package,empty_locker, ping_or_create};
+use utils::{establish_connection, get_avaible_port, return_local_ipaddress, get_all_packages};
 use structs::{Package, CollectPackageStruct, LockerCreationStruct, ResponseStruct};
-use models::Locker;
+use models::{Locker, PackageModel};
 use rocket::serde::json::Json;
 use rocket_cors::{CorsOptions, AllowedOrigins, AllowedHeaders};
 use rocket::http::Method;
 use dotenv::dotenv;
-use async_cron_scheduler::{Job, Scheduler};
-use chrono::offset::Local;
-use std::time::Duration;
+// use async_cron_scheduler::{Job, Scheduler};
+// use chrono::offset::Local;
+// use std::time::Duration;
 use rocket::http::Status;
-mod functions;
+mod views;
 mod utils;
 mod structs;
 
@@ -74,6 +74,12 @@ async fn collect_package(data: Json<CollectPackageStruct>) -> Json<ResponseStruc
 }
 
 
+#[get("/all_packages")]
+fn all_packages() -> Json<Vec<PackageModel>> {
+    Json(get_all_packages())
+}
+
+
 #[launch]
 #[tokio::main]
 async fn rocket() -> _ {
@@ -109,7 +115,9 @@ async fn rocket() -> _ {
     .configure(rocket::Config::figment()
     .merge(("address", return_local_ipaddress().unwrap()))
     .merge(("port", get_avaible_port())))
-    .mount("/", routes![check, add_locker, add_package, all_lockers, collect_package])
+    .mount("/package", routes![add_package,collect_package,all_packages])
+    .mount("/locker", routes![add_locker, all_lockers])
+    .mount("/", routes![check])
 
 }
 

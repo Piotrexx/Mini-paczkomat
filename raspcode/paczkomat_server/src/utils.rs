@@ -3,7 +3,7 @@ use local_ip_address::local_ip;
 use std::net::TcpListener;
 use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
-use crate::models::Locker;
+use crate::models::{Locker, PackageModel};
 use dotenv::dotenv;
 
 pub fn return_local_ipaddress() ->  Result<IpAddr,String>{
@@ -66,6 +66,12 @@ pub fn port_is_available(port: u16) -> bool{
     }
 }
 
+pub fn get_all_packages() -> Vec<PackageModel> {
+    use crate::schema::package::dsl::*;
+    let mut connection = establish_connection();
+    package.load::<PackageModel>(&mut connection).unwrap()
+}
+
 
 pub fn establish_connection() -> SqliteConnection {
     dotenv().ok();
@@ -74,3 +80,5 @@ pub fn establish_connection() -> SqliteConnection {
 
     SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
 }
+
+
