@@ -55,12 +55,16 @@ class PackageViewSet(GenericViewSet):
     queryset = Package.objects.all()
     serializer_class = PackageSerializer
 
+
+    @action(detail=False, methods=['post'])
+    def package_exists(self, request):
+        return Package.objects.filter(package_code=request.data['package_code'], picked_up=False).exists()
+
     @action(detail=False, methods=['post'])
     def create_package(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        locker = Locker.objects.filter(empty=True)[:1][0]
-        serializer.save(locker=locker, receiver=User.objects.get(id=request.data['receiver']))
+        serializer.save(locker=None, receiver=User.objects.get(id=request.data['receiver']))
         return Response(f"Udaj się do najbliższego paczkomatu i nadaj przesyłkę, oto kod przesyłki: {serializer.data["package_code"]}", status=HTTP_201_CREATED)
 
 

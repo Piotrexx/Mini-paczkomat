@@ -35,8 +35,6 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=100)
     date_joined = models.DateTimeField("date joined", auto_now_add=True, editable=False)
     is_staff = models.BooleanField(default=False)
     is_worker = models.BooleanField(default=False)
@@ -44,8 +42,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = CustomUserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
-
 
 class Paczkomat(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
@@ -65,6 +61,6 @@ class Package(models.Model):
     package_code = models.IntegerField(default=get_package_safe_code, editable=False)
     package_name = models.CharField(max_length=100)
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="receiver")
-    locker = models.ForeignKey(Locker, on_delete=models.CASCADE, related_name="locker")
+    locker = models.ForeignKey(Locker, on_delete=models.CASCADE, related_name="locker", null=True)
     date_addressed = models.DateTimeField(auto_now_add=True)
     picked_up = models.BooleanField(default=False)
