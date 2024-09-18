@@ -44,7 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "email"
 
 class Paczkomat(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     ip_address = models.GenericIPAddressField(protocol='IPv4')
     port = models.IntegerField(validators=[MinValueValidator(8001), MaxValueValidator(9000)], default=None, null=True)
     location_point = geo_model.PointField(null=True)
@@ -52,7 +52,7 @@ class Paczkomat(models.Model):
     osm_type = models.CharField(max_length=1, default=None, null=True)
 
 class Locker(models.Model):
-    locker_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    locker_id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
     gpio = models.IntegerField()
     empty = models.BooleanField(default=True)
     paczkomat = models.ForeignKey(Paczkomat, on_delete=models.CASCADE)
@@ -61,6 +61,6 @@ class Package(models.Model):
     package_code = models.IntegerField(default=get_package_safe_code, editable=False)
     package_name = models.CharField(max_length=100)
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name="receiver")
-    locker = models.ForeignKey(Locker, on_delete=models.CASCADE, related_name="locker", null=True)
+    locker = models.ForeignKey(Locker, on_delete=models.CASCADE, related_name="packages", null=True)
     date_addressed = models.DateTimeField(auto_now_add=True)
     picked_up = models.BooleanField(default=False)

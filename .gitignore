@@ -7,3 +7,4 @@ Cargo.lock
 lockers.sqlite3
 lockers.sqlite
 diesel.toml
+package-lock.json
