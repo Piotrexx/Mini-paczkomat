@@ -10,15 +10,13 @@ class CustomUserManager(BaseUserManager):
     def create(self, **kwargs):
         return self.create_user(**kwargs)
 
-    def create_user(self, email, first_name, last_name, password, **kwargs):
-        if not email or not first_name or not last_name or not password:
+    def create_user(self, email, password, **kwargs):
+        if not email or not password:
             return ValueError("The First Name is required ")
 
         email = self.normalize_email(email)
         user = self.model(
             email=email,
-            first_name=first_name,
-            last_name=last_name,
             **kwargs,
         )
         user.set_password(password)
