@@ -2,6 +2,7 @@
 mod test {
     use super::*;
     #[test]
+    #[cfg(target_os = "unix")]
     fn led_test() {
         use rust_gpiozero::*;
         let mut locker = LED::new(27);        
@@ -13,6 +14,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(target_os = "unix")]
     fn all_led_test() {
         use rust_gpiozero::*;
         use std::thread::sleep;
@@ -28,6 +30,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(target_os = "unix")]
     fn test_gpio_activity() {
         use rust_gpiozero::*;
         use std::thread::sleep;
@@ -46,6 +49,7 @@ mod test {
 
 
     #[test]
+    #[cfg(target_os = "unix")]
     fn variable_gpio_activity() {
         use rust_gpiozero::*;
         use std::thread::sleep;
@@ -67,6 +71,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(target_os = "unix")]
     fn loop_test() {
         use rust_gpiozero::*;
         use std::thread::sleep;

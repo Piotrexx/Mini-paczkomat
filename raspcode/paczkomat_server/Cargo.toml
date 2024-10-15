@@ -18,6 +18,7 @@ lazy_static = "1.5.0"
 rocket_cors = "0.6.0"
 async-cron-scheduler = "2.0.1"
 chrono = "0.4.38"
+rppal = "0.18.0"
 
 [dependencies.uuid]
 version = "1.8.0"

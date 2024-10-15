@@ -1,5 +1,9 @@
-use std::net::IpAddr;
+use std::{collections::HashMap, net::IpAddr};
 use local_ip_address::local_ip;
+use reqwest::{Client, Response, Url};
+use serde_json::Value;
+use serde_json;
+use std::any::type_name;
 use std::net::TcpListener;
 use diesel::sqlite::SqliteConnection;
 use diesel::prelude::*;
@@ -81,4 +85,37 @@ pub fn establish_connection() -> SqliteConnection {
     SqliteConnection::establish(&database_url).unwrap_or_else(|_| panic!("Nie można było połączyć się z {}", database_url))
 }
 
+fn type_of<T>(_: T) -> &'static str {
+    type_name::<T>()
+}
+
+// dokończyć util do wysyłania requestów 
+// pub async fn to_main_server<T: std::fmt::Debug>(mut sending_data: HashMap<&str, T>, url_sufix: &str) -> Response{
+//     dotenv().ok();
+//     let url = format!("{}/{}", &std::env::var("server_url").expect("Nie znaleziono url servera w pliku .env."), url_sufix);
+//     let client = Client::new();
+//     let uuid = std::env::var("uuid").expect("Nie znaleziono uuid w pliku .env");
+//     let string: String = String::from("{");
+
+//     for (key, value) in sending_data {
+//         if type_of(value) == "i32"{
+//             string += format!(r#" "{}":  "{:?}", "#,key, value).as_str();
+//             continue;
+//         }
+//         string += r#" "{key}":  "{value}", "#
+//     }
+//     string += "}";
+
+//     let data = serde_json::from_str(string.as_str()).unwrap();
+
+//     client
+//     .post(Url::parse(&url).unwrap())
+//     .json(data)
+//     .send()
+//     .await
+//     .unwrap()
+
+
+
+// }
 
