@@ -1,20 +1,21 @@
-use serde::{Deserialize, Serialize};
 use diesel::prelude::*;
+use rocket::serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Selectable, Queryable, Insertable, Deserialize)]
-#[diesel(table_name=crate::schema::lockers)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
+#[derive(Queryable, Selectable, Serialize, Deserialize)]
+#[serde(crate="rocket::serde")]
+#[diesel(table_name = crate::schema::locker)]
 pub struct Locker {
-    pub lockerid: String,
-    pub gpio: i32,
-    pub is_empty: bool
+    pub id: String,
+    pub locker_gpio: i32,
+    pub is_empty: bool,
+    pub io_type: bool,
 }
 
 
-#[derive(Serialize, Selectable, Queryable, Insertable, Deserialize)]
-#[diesel(table_name=crate::schema::package)]
-#[diesel(check_for_backend(diesel::sqlite::Sqlite))]
-pub struct PackageModel {
-    pub packageid: i32,
-    pub locker_id: String
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::locker)]
+pub struct NewLocker {
+    pub id: String,
+    pub locker_gpio: i32,
+    pub io_type: bool
 }
